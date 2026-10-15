@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCatalog } from '../context/CatalogContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, 
@@ -360,6 +361,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onAddToCart,
   onSelectDetail
 }) => {
+  const { products: liveItems } = useCatalog();
+  const catalog: Product[] = liveItems.length ? liveItems : SAMPLE_PRODUCTS;
   const [selectedCategory, setSelectedCategory] = useState<string>(filterCategory);
   const [addedIds, setAddedIds] = useState<number[]>([]);
 
@@ -372,8 +375,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   ];
 
   const filteredProducts = selectedCategory === 'All'
-    ? SAMPLE_PRODUCTS
-    : SAMPLE_PRODUCTS.filter(p => p.category === selectedCategory);
+    ? catalog
+    : catalog.filter(p => p.category === selectedCategory);
 
   const handleAdd = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();

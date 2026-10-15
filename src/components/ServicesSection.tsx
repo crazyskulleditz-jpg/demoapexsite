@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCatalog } from '../context/CatalogContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Wrench, 
@@ -285,7 +286,9 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
   onSelectDetail,
   onBookingCreated
 }) => {
-  const [selectedService, setSelectedService] = useState<GarageService>(GARAGE_SERVICES[0]);
+  const { services: liveItems } = useCatalog();
+  const catalogSvc: GarageService[] = liveItems.length ? liveItems : GARAGE_SERVICES;
+  const [selectedService, setSelectedService] = useState<GarageService>(catalogSvc[0]);
   const [vehicleModel, setVehicleModel] = useState('');
   const [bookingDate, setBookingDate] = useState('2025-05-20');
   const [timeSlot, setTimeSlot] = useState('10:00 AM');
@@ -390,8 +393,8 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => {
-                setSelectedService(GARAGE_SERVICES[0]);
-                onOpenBookingModal(GARAGE_SERVICES[0]);
+                setSelectedService(catalogSvc[0]);
+                onOpenBookingModal(catalogSvc[0]);
               }}
               className="px-6 py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95"
             >
@@ -409,7 +412,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
 
         {/* Services Cards Grid - Fully clickable across entire card */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-          {GARAGE_SERVICES.map((service) => (
+          {catalogSvc.map((service) => (
             <motion.div
               key={service.id}
               whileHover={{ y: -6 }}
@@ -577,12 +580,12 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                       <select
                         value={selectedService.id}
                         onChange={(e) => {
-                          const found = GARAGE_SERVICES.find(s => s.id === e.target.value);
+                          const found = catalogSvc.find(s => s.id === e.target.value);
                           if (found) setSelectedService(found);
                         }}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-sky-500 focus:bg-white"
                       >
-                        {GARAGE_SERVICES.map(s => (
+                        {catalogSvc.map(s => (
                           <option key={s.id} value={s.id}>
                             {isAr && s.titleAr ? s.titleAr : s.title} ({s.priceDisplay || `${s.price} KWD`})
                           </option>

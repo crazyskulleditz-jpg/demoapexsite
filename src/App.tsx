@@ -16,6 +16,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { AdminControls } from './components/AdminControls';
 import { SiteProvider, useSiteContext } from './context/SiteContext';
 import { SiteConfigProvider } from './context/SiteConfigContext';
+import { CatalogContext } from './context/CatalogContext';
 import { 
   Product, 
   CartItem, 
@@ -1480,12 +1481,29 @@ function MainApp() {
   );
 }
 
+const CatalogBridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { config } = useSiteContext();
+  return (
+    <CatalogContext.Provider
+      value={{
+        products: config.products || [],
+        services: config.services || [],
+        vehicles: config.vehicles || [],
+      }}
+    >
+      {children}
+    </CatalogContext.Provider>
+  );
+};
+
 export default function App() {
   return (
-    <SiteConfigProvider>
-      <SiteProvider>
-        <MainApp />
-      </SiteProvider>
-    </SiteConfigProvider>
+    <SiteProvider>
+      <CatalogBridge>
+        <SiteConfigProvider>
+          <MainApp />
+        </SiteConfigProvider>
+      </CatalogBridge>
+    </SiteProvider>
   );
 }

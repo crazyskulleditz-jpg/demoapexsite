@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCatalog } from '../context/CatalogContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Car, 
@@ -300,6 +301,8 @@ export const ShowroomGrid: React.FC<ShowroomGridProps> = ({
   language,
   onSelectDetail
 }) => {
+  const { vehicles: liveItems } = useCatalog();
+  const catalogVeh: Vehicle[] = liveItems.length ? liveItems : SHOWROOM_VEHICLES;
   const [selectedBrand, setSelectedBrand] = useState<string>('All');
   const [activeCarModal, setActiveCarModal] = useState<Vehicle | null>(null);
   const [driveRequested, setDriveRequested] = useState(false);
@@ -307,8 +310,8 @@ export const ShowroomGrid: React.FC<ShowroomGridProps> = ({
   const isAr = language === 'ar';
 
   const filteredVehicles = selectedBrand === 'All'
-    ? SHOWROOM_VEHICLES
-    : SHOWROOM_VEHICLES.filter(v => v.brand === selectedBrand);
+    ? catalogVeh
+    : catalogVeh.filter(v => v.brand === selectedBrand);
 
   const handleDriveRequest = (e: React.FormEvent) => {
     e.preventDefault();
