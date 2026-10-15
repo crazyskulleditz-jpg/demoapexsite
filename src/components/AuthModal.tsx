@@ -10,6 +10,31 @@ interface AuthModalProps {
   language: Language;
 }
 
+// Kuwait phone validator & sanitizer
+export const sanitizeKuwaitPhone = (input: string): { isValid: boolean; raw8: string; formatted: string; errorKey?: 'EMPTY' | 'INVALID_LENGTH' | 'INVALID_PREFIX' } => {
+  let digits = input.replace(/\D/g, '');
+
+  if (digits.startsWith('00965')) {
+    digits = digits.substring(5);
+  } else if (digits.startsWith('965')) {
+    digits = digits.substring(3);
+  }
+
+  if (digits.length === 0) {
+    return { isValid: false, raw8: '', formatted: '', errorKey: 'EMPTY' };
+  }
+
+  if (digits.length !== 8) {
+    return { isValid: false, raw8: digits, formatted: `+965 ${digits}`, errorKey: 'INVALID_LENGTH' };
+  }
+
+  if (!/^[24569]/.test(digits)) {
+    return { isValid: false, raw8: digits, formatted: `+965 ${digits}`, errorKey: 'INVALID_PREFIX' };
+  }
+
+  return { isValid: true, raw8: digits, formatted: `+965 ${digits}` };
+};
+
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
@@ -22,10 +47,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('+965 ');
+  const [phoneDigits, setPhoneDigits] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [duplicateError, setDuplicateError] = useState(false);
   const [loginErrorMsg, setLoginErrorMsg] = useState('');
 
@@ -34,6 +60,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const resetErrors = () => {
     setDuplicateError(false);
     setLoginErrorMsg('');
+    setPhoneError('');
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    resetErrors();
+    let val = e.target.value.replace(/\D/g, '');
+    
+    // Strip country code if pasted
+    if (val.startsWith('00965')) {
+      val = val.substring(5);
+    } else if (val.startsWith('965')) {
+      val = val.substring(3);
+    }
+
+    // Restrict to max 8 digits
+    if (val.length <= 8) {
+      setPhoneDigits(val);
+    }
   };
 
   const handleSwitchToLogin = (prefilledEmail?: string) => {
@@ -47,6 +91,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     resetErrors();
+
+    // Validate phone number strictly on sign-up
+    let validatedPhone = '';
+    if (authMode === 'signup') {
+      const phoneValidation = sanitizeKuwaitPhone(phoneDigits);
+      if (!phoneValidation.isValid) {
+        if (phoneValidation.errorKey === 'EMPTY') {
+          setPhoneError(isAr ? 'يرجى إدخال رقم الهاتف الكويتي' : 'Please enter your Kuwait phone number');
+        } else if (phoneValidation.errorKey === 'INVALID_LENGTH') {
+          setPhoneError(
+            isAr 
+              ? 'يجب أن يتكون رقم الهاتف الكويتي من 8 أرقام تماماً' 
+              : 'Kuwait phone number must be exactly 8 digits'
+          );
+        } else if (phoneValidation.errorKey === 'INVALID_PREFIX') {
+          setPhoneError(
+            isAr 
+              ? 'يجب أن يبدأ الرقم الكويتي بـ 2، 4، 5، 6، أو 9' 
+              : 'Kuwait number must start with 2, 4, 5, 6, or 9'
+          );
+        }
+        return;
+      }
+      validatedPhone = phoneValidation.formatted;
+    }
+
     setLoading(true);
 
     setTimeout(() => {
@@ -66,26 +136,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
 
-      // Load registered accounts from localStorage
-      let existingUsers: any[] = [];
+      // Load registered accounts from localStorage array
+      let existingUsers: (UserType & { password?: string })[] = [];
       try {
         const stored = localStorage.getItem('apextorque_users');
         if (stored) {
-          existingUsers = JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) existingUsers = parsed;
         }
       } catch (err) {
         console.warn('Failed to parse apextorque_users from localStorage:', err);
       }
 
       const normalizedEmail = email.trim().toLowerCase();
-      const normalizedPhone = phone.trim().replace(/\s+/g, '');
+      const rawPhone8 = phoneDigits.trim();
 
       // Handle SIGN-UP
       if (authMode === 'signup') {
-        const isDuplicate = existingUsers.some((u: any) => {
+        const isDuplicate = existingUsers.some((u) => {
           const userEmail = u.email ? u.email.trim().toLowerCase() : '';
-          const userPhone = u.phone ? u.phone.trim().replace(/\s+/g, '') : '';
-          return userEmail === normalizedEmail || (normalizedPhone.length > 5 && userPhone === normalizedPhone);
+          const userDigits = u.phone ? u.phone.replace(/\D/g, '') : '';
+          const userPhone8 = userDigits.startsWith('965') ? userDigits.substring(3) : userDigits;
+          return userEmail === normalizedEmail || (rawPhone8.length === 8 && userPhone8 === rawPhone8);
         });
 
         if (isDuplicate) {
@@ -94,18 +166,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }
 
         const newUser: UserType & { password?: string } = {
-          id: `usr_${Date.now()}`,
-          name: name.trim(),
+          id: `usr_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`,
+          name: name.trim() || 'Workshop Client',
           email: normalizedEmail,
-          phone: phone.trim(),
+          phone: validatedPhone,
           password: password,
           paymentMethod: 'Cash on Arrival / Delivery',
-          savedVehicles: []
+          savedVehicles: [],
+          createdAt: new Date().toISOString()
         };
 
-        const updatedUsersList = [...existingUsers, newUser];
+        const updatedUsersList = [newUser, ...existingUsers];
         try {
           localStorage.setItem('apextorque_users', JSON.stringify(updatedUsersList));
+          localStorage.setItem('apextorque_user', JSON.stringify(newUser));
+          window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new CustomEvent('apextorque_users_updated', { detail: newUser }));
         } catch (err) {
           console.error('Failed to save to apextorque_users:', err);
         }
@@ -117,7 +193,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       // Handle LOGIN
       if (authMode === 'login') {
-        const matchedUser = existingUsers.find((u: any) => {
+        const matchedUser = existingUsers.find((u) => {
           const userEmail = u.email ? u.email.trim().toLowerCase() : '';
           return userEmail === normalizedEmail;
         });
@@ -127,23 +203,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             setLoginErrorMsg(isAr ? 'كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.' : 'Incorrect password. Please try again.');
             return;
           }
+          try {
+            localStorage.setItem('apextorque_user', JSON.stringify(matchedUser));
+            window.dispatchEvent(new Event('storage'));
+          } catch (err) {
+            console.error(err);
+          }
           onLoginSuccess(matchedUser);
           onClose();
           return;
         }
 
-        // If no prior registered user is found in list, authenticate and persist new record
+        // If no prior registered user is found in list, authenticate and persist new record into apextorque_users
         const fallbackUser: UserType & { password?: string } = {
-          id: `usr_${Date.now()}`,
+          id: `usr_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`,
           name: name.trim() || (email.split('@')[0] ? email.split('@')[0].toUpperCase() : 'Customer'),
           email: normalizedEmail,
-          phone: phone.trim().length > 5 ? phone.trim() : '+965 9900 1234',
+          phone: phoneDigits.length === 8 ? `+965 ${phoneDigits}` : '+965 99001234',
+          password: password,
           paymentMethod: 'Cash on Arrival / Delivery',
-          savedVehicles: []
+          savedVehicles: [],
+          createdAt: new Date().toISOString()
         };
 
+        const updatedList = [fallbackUser, ...existingUsers];
         try {
-          localStorage.setItem('apextorque_users', JSON.stringify([...existingUsers, fallbackUser]));
+          localStorage.setItem('apextorque_users', JSON.stringify(updatedList));
+          localStorage.setItem('apextorque_user', JSON.stringify(fallbackUser));
+          window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new CustomEvent('apextorque_users_updated', { detail: fallbackUser }));
         } catch (err) {
           console.error('Failed to save user:', err);
         }
@@ -151,7 +239,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onLoginSuccess(fallbackUser);
         onClose();
       }
-    }, 600);
+    }, 500);
   };
 
   return (
@@ -317,22 +405,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 {authMode === 'signup' && (
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                      {isAr ? 'رقم الهاتف (الكويت)' : 'Mobile (+965 Kuwait)'}
+                      {isAr ? 'رقم الهاتف الكويتي (8 أرقام)' : 'Kuwait Mobile (8 Digits)'}
                     </label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="tel"
-                        required
-                        value={phone}
-                        onChange={(e) => {
-                          setPhone(e.target.value);
-                          resetErrors();
-                        }}
-                        placeholder="+965 9900 1234"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:border-sky-500 focus:bg-white"
-                      />
+                    <div className="flex items-center gap-2">
+                      <div className="bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold font-mono text-slate-700 flex items-center gap-1.5 shrink-0 select-none">
+                        <span>🇰🇼</span>
+                        <span>+965</span>
+                      </div>
+                      <div className="relative flex-1">
+                        <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="tel"
+                          required
+                          maxLength={8}
+                          value={phoneDigits}
+                          onChange={handlePhoneChange}
+                          placeholder="99001234"
+                          className={`w-full bg-slate-50 border ${phoneError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-sky-500'} rounded-xl px-4 py-2.5 pl-10 text-sm font-mono font-bold tracking-wider focus:outline-none focus:bg-white`}
+                        />
+                      </div>
                     </div>
+                    {phoneError ? (
+                      <p className="text-[11px] text-red-600 font-bold mt-1.5 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{phoneError}</span>
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        {isAr ? 'يبدأ بـ 2 أو 4 أو 5 أو 6 أو 9' : 'Starts with 2, 4, 5, 6, or 9'}
+                      </p>
+                    )}
                   </div>
                 )}
 

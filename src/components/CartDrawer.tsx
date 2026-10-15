@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -8,9 +8,14 @@ import {
   Trash2, 
   ArrowRight, 
   CheckCircle, 
-  Truck 
+  Truck,
+  User as UserIcon,
+  Phone,
+  MapPin,
+  Mail,
+  AlertCircle
 } from 'lucide-react';
-import { CartItem, Language } from '../types';
+import { CartItem, Language, User, OrderRecord } from '../types';
 
 interface CartDrawerProps {
   language: Language;
@@ -20,7 +25,8 @@ interface CartDrawerProps {
   onUpdateQuantity: (productId: number, quantity: number) => void;
   onRemoveItem: (productId: number) => void;
   onClearCart: () => void;
-  onOrderPlaced?: (order: any) => void; // Optional direct state update callback
+  onOrderPlaced?: (order: OrderRecord) => void;
+  currentUser?: User | null;
 }
 
 const FREE_TOWING_THRESHOLD = 300; // in KWD
@@ -33,10 +39,28 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
-  onOrderPlaced
+  onOrderPlaced,
+  currentUser
 }) => {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutComplete, setCheckoutComplete] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState<string>('');
+
+  // Customer contact state for checkout
+  const [customerName, setCustomerName] = useState(currentUser?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(currentUser?.phone || '+965 ');
+  const [customerEmail, setCustomerEmail] = useState(currentUser?.email || '');
+  const [shippingAddress, setShippingAddress] = useState('Shuwaikh / Kuwait Delivery');
+  const [checkoutError, setCheckoutError] = useState('');
+
+  // Keep fields synced when user logs in / out
+  useEffect(() => {
+    if (currentUser) {
+      setCustomerName(currentUser.name || '');
+      setCustomerPhone(currentUser.phone || '+965 ');
+      setCustomerEmail(currentUser.email || '');
+    }
+  }, [currentUser]);
 
   const isAr = language === 'ar';
 
@@ -48,12 +72,45 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const deliveryFee = qualifiesForFreeTowing ? 0 : (items.length > 0 ? 10 : 0);
   const total = subtotal + deliveryFee;
 
-  const handleSimulateCheckout = () => {
+  // Kuwait phone validation (8 digits starting with 2, 5, 6, 9)
+  const isValidKuwaitPhone = (val: string): boolean => {
+    const digitsOnly = val.replace(/[^0-9]/g, '');
+    let localDigits = digitsOnly;
+    if (digitsOnly.startsWith('965')) {
+      localDigits = digitsOnly.substring(3);
+    }
+    return localDigits.length === 8 && /^[2569]/.test(localDigits);
+  };
+
+  const handleSimulateCheckout = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isValidKuwaitPhone(customerPhone)) {
+      setCheckoutError(
+        isAr 
+          ? 'يرجى إدخال رقم هاتف كويتي صحيح (8 أرقام يبدأ بـ 2، 5، 6، 9)' 
+          : 'Please enter a valid 8-digit Kuwait phone number starting with 2, 5, 6, or 9.'
+      );
+      return;
+    }
+    setCheckoutError('');
     setIsCheckingOut(true);
 
-    // 1. Get current logged-in user
-    const currentUserRaw = localStorage.getItem('apextorque_user');
-    const currentUser = currentUserRaw ? JSON.parse(currentUserRaw) : null;
+    // 1. Get current logged-in user or active props
+    let activeUser = currentUser;
+    if (!activeUser) {
+      try {
+        const currentUserRaw = localStorage.getItem('apextorque_user');
+        activeUser = currentUserRaw ? JSON.parse(currentUserRaw) : null;
+      } catch {
+        activeUser = null;
+      }
+    }
+
+    const assignedUserId = activeUser?.id || `guest_${Date.now()}`;
+    const assignedName = customerName.trim() || activeUser?.name || 'Customer';
+    const assignedPhone = customerPhone.trim();
+    const assignedEmail = customerEmail.trim() || activeUser?.email || '';
 
     // 2. Format both English and Arabic item summaries & total count
     const itemSummaryEn = items.map(i => i.product.name).join(', ');
@@ -118,11 +175,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       year: 'numeric',
     });
 
-    // 4. Build complete bilingual order object
-    const newOrder = {
-      id: 'ORD-KW-' + Math.floor(100000 + Math.random() * 900000),
+    // 4. Generate unique non-colliding order ID
+    const uniqueOrderId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    setLastOrderId(uniqueOrderId);
+
+    // 5. Build order record bound strictly to customer
+    const newOrder: OrderRecord = {
+      id: uniqueOrderId,
       date: todayEn,
       dateAr: todayAr,
+
+      userId: assignedUserId,
+      customerName: assignedName,
+      customerPhone: assignedPhone,
+      customerEmail: assignedEmail,
+      shippingAddress: shippingAddress.trim() || 'Kuwait Express Delivery',
 
       name: itemSummaryEn,
       nameAr: itemSummaryAr,
@@ -160,9 +227,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       paymentMethodAr: 'الدفع عند الاستلام',
       status: 'Dispatched',
       statusAr: 'تم الشحن',
-
-      userId: currentUser?.id || 'guest',
-      userEmail: currentUser?.email || 'guest@apextorque.kw',
+      trackingNumber: `TRK-KW-${Math.floor(100000 + Math.random() * 900000)}`,
 
       items: formattedItems,
       parts: formattedItems,
@@ -172,23 +237,48 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       breakdown: formattedItems,
     };
 
-    // 5. Save to global orders history
-    const existingOrdersRaw = localStorage.getItem('apextorque_orders');
-    const existingOrders = existingOrdersRaw ? JSON.parse(existingOrdersRaw) : [];
-    const updatedOrders = [newOrder, ...existingOrders];
-    localStorage.setItem('apextorque_orders', JSON.stringify(updatedOrders));
-
-    // 6. Update active user profile
-    if (currentUser) {
-      const userOrders = currentUser.orders || [];
-      const updatedUser = {
-        ...currentUser,
-        orders: [newOrder, ...userOrders],
-      };
-      localStorage.setItem('apextorque_user', JSON.stringify(updatedUser));
+    // 6. Save to global orders repository
+    let existingOrders: OrderRecord[] = [];
+    try {
+      const existingOrdersRaw = localStorage.getItem('apextorque_orders');
+      existingOrders = existingOrdersRaw ? JSON.parse(existingOrdersRaw) : [];
+    } catch {
+      existingOrders = [];
     }
 
-    // 7. Dispatch instant window events so open Profile/App state updates live
+    const updatedOrders = [newOrder, ...existingOrders];
+    try {
+      localStorage.setItem('apextorque_orders', JSON.stringify(updatedOrders));
+    } catch (err) {
+      console.error('Failed to save orders to localStorage:', err);
+    }
+
+    // 7. Update active user profile and users database
+    if (activeUser) {
+      const userOrders = (activeUser as any).orders || [];
+      const updatedUser = {
+        ...activeUser,
+        orders: [newOrder, ...userOrders],
+      };
+      try {
+        localStorage.setItem('apextorque_user', JSON.stringify(updatedUser));
+      } catch (err) {
+        console.error('Failed to update active user profile:', err);
+      }
+
+      try {
+        const usersListRaw = localStorage.getItem('apextorque_users');
+        if (usersListRaw) {
+          const usersList: any[] = JSON.parse(usersListRaw);
+          const updatedList = usersList.map(u => u.id === activeUser?.id || u.email === activeUser?.email ? updatedUser : u);
+          localStorage.setItem('apextorque_users', JSON.stringify(updatedList));
+        }
+      } catch (err) {
+        console.error('Failed to update users directory:', err);
+      }
+    }
+
+    // 8. Dispatch real-time events across windows
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new CustomEvent('apextorque_orders_updated', { detail: newOrder }));
 
@@ -204,7 +294,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         setCheckoutComplete(false);
         onClose();
       }, 2500);
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -279,7 +369,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             </div>
 
-            {/* Items */}
+            {/* Items and Checkout Form */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {checkoutComplete ? (
                 <div className="h-full flex flex-col items-center justify-center text-center py-12">
@@ -292,8 +382,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <p className="text-sm text-slate-600 max-w-xs mb-4">
                     {isAr ? 'سيتم التواصل معك لتأكيد التوصيل والتركيب (الدفع عند الاستلام).' : 'Invoice and dispatch details saved to your profile. (Cash on Delivery)'}
                   </p>
-                  <div className="font-mono text-xs text-sky-600 font-bold">
-                    {isAr ? 'رقم الطلب' : 'ORDER'} #APX-KW-{Math.floor(100000 + Math.random() * 900000)}
+                  <div className="font-mono text-xs text-sky-600 font-bold bg-sky-50 px-3 py-1.5 rounded-xl border border-sky-200">
+                    {isAr ? 'رقم الطلب:' : 'ORDER ID:'} {lastOrderId}
                   </div>
                 </div>
               ) : items.length === 0 ? (
@@ -307,69 +397,147 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </p>
                 </div>
               ) : (
-                items.map(({ product, quantity }) => (
-                  <div 
-                    key={product.id}
-                    className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex gap-3">
-                        <img 
-                          src={product.image} 
-                          alt={product.name} 
-                          className="w-14 h-14 object-cover rounded-xl border border-slate-200" 
-                        />
-                        <div>
-                          <span className="text-[10px] font-bold uppercase text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">
-                            {product.category}
-                          </span>
-                          <h4 className="font-bold text-slate-900 text-sm mt-1">
-                            {isAr && product.nameAr ? product.nameAr : product.name}
-                          </h4>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => onRemoveItem(product.id)}
-                        className="text-slate-400 hover:text-red-500 p-1 transition-colors"
+                <>
+                  {/* Cart Item Cards */}
+                  <div className="space-y-3">
+                    {items.map(({ product, quantity }) => (
+                      <div 
+                        key={product.id}
+                        className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
-                        <button
-                          onClick={() => onUpdateQuantity(product.id, quantity - 1)}
-                          className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="font-bold text-xs px-2 text-slate-900">{quantity}</span>
-                        <button
-                          onClick={() => onUpdateQuantity(product.id, quantity + 1)}
-                          className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-sm font-extrabold text-slate-900">
-                          {(product.price * quantity).toLocaleString()} KWD
-                        </div>
-                        {quantity > 1 && (
-                          <div className="text-[10px] text-slate-400">
-                            {product.price} {isAr ? 'د.ك للقطعة' : 'KWD each'}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex gap-3">
+                            <img 
+                              src={product.image} 
+                              alt={product.name} 
+                              className="w-14 h-14 object-cover rounded-xl border border-slate-200" 
+                            />
+                            <div>
+                              <span className="text-[10px] font-bold uppercase text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">
+                                {product.category}
+                              </span>
+                              <h4 className="font-bold text-slate-900 text-sm mt-1">
+                                {isAr && product.nameAr ? product.nameAr : product.name}
+                              </h4>
+                            </div>
                           </div>
-                        )}
+                          <button
+                            onClick={() => onRemoveItem(product.id)}
+                            className="text-slate-400 hover:text-red-500 p-1 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
+                            <button
+                              onClick={() => onUpdateQuantity(product.id, quantity - 1)}
+                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="font-bold text-xs px-2 text-slate-900">{quantity}</span>
+                            <button
+                              onClick={() => onUpdateQuantity(product.id, quantity + 1)}
+                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-sm font-extrabold text-slate-900">
+                              {(product.price * quantity).toLocaleString()} KWD
+                            </div>
+                            {quantity > 1 && (
+                              <div className="text-[10px] text-slate-400">
+                                {product.price} {isAr ? 'د.ك للقطعة' : 'KWD each'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Customer Delivery Details Section */}
+                  <div className="pt-4 border-t border-slate-200 space-y-3">
+                    <h3 className="text-xs font-bold uppercase text-slate-900 flex items-center gap-1.5">
+                      <UserIcon className="w-3.5 h-3.5 text-sky-600" />
+                      <span>{isAr ? 'بيانات العميل للتوصيل' : 'Customer & Delivery Contact'}</span>
+                    </h3>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-600 mb-1">
+                        {isAr ? 'الاسم الكامل' : 'Recipient Name'}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="e.g. Faisal Al-Sabah"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-600 mb-1">
+                        {isAr ? 'رقم الهاتف الكويتي (+965)' : 'Kuwait Mobile (+965)'}
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={customerPhone}
+                        onChange={(e) => {
+                          setCustomerPhone(e.target.value);
+                          setCheckoutError('');
+                        }}
+                        placeholder="+965 9900 1234"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-slate-600 mb-1">
+                          {isAr ? 'البريد الإلكتروني' : 'Email (Optional)'}
+                        </label>
+                        <input
+                          type="email"
+                          value={customerEmail}
+                          onChange={(e) => setCustomerEmail(e.target.value)}
+                          placeholder="client@domain.kw"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-slate-600 mb-1">
+                          {isAr ? 'عنوان التوصيل' : 'Delivery Address'}
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingAddress}
+                          onChange={(e) => setShippingAddress(e.target.value)}
+                          placeholder="Area, Block, Street"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-sky-500"
+                        />
                       </div>
                     </div>
+
+                    {checkoutError && (
+                      <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{checkoutError}</span>
+                      </div>
+                    )}
                   </div>
-                ))
+                </>
               )}
             </div>
 
-            {/* Footer Summary */}
+            {/* Footer Summary & Checkout CTA */}
             {items.length > 0 && !checkoutComplete && (
               <div className="p-6 border-t border-slate-200 bg-slate-50 space-y-4">
                 <div className="space-y-2 text-xs font-semibold text-slate-600">
@@ -392,7 +560,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <button
                   onClick={handleSimulateCheckout}
                   disabled={isCheckingOut}
-                  className="w-full py-4 bg-sky-600 hover:bg-sky-500 text-white font-bold uppercase tracking-wider text-sm rounded-2xl shadow-md transition-all active:scale-[0.98]"
+                  className="w-full py-4 bg-sky-600 hover:bg-sky-500 text-white font-bold uppercase tracking-wider text-sm rounded-2xl shadow-md transition-all active:scale-[0.98] disabled:opacity-60"
                 >
                   {isCheckingOut ? (
                     <span>{isAr ? 'جاري المعالجة...' : 'Processing...'}</span>

@@ -13,6 +13,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { Product, Language, DetailItem } from '../types';
+import { FALLBACK_IMAGE } from './ImageGallery';
 
 export const SAMPLE_PRODUCTS: Product[] = [
   {
@@ -35,12 +36,11 @@ export const SAMPLE_PRODUCTS: Product[] = [
     longDescription: "🚀 High-Output Calibration engineered for extreme Kuwait desert climates (up to 55°C ambient). ⚙️ Precision Engineered OEM Fitment directly via OBD2 port without opening ECU enclosure. 🔧 Guaranteed 1-Year Garage Warranty including unlimited re-flashes.",
     image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // ECU Device
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80", // Dyno Bay Tuning
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Engine Hookup
-      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80", // Telemetry Logger
-      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80", // Dyno Run Supercar
-      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80"  // In-Car Installation
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Handheld Flasher
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80", // High Tech Microchip
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80", // Code & Maps
+      "https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=1000&q=80", // Screen Readouts
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80"  // Dyno Diagnostic Test
     ],
     inTheBox: [
       "Apex Stage II Handheld Color Touchscreen Programmer",
@@ -54,6 +54,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
       "Flash Duration": "4.5 Minutes Full Read / 2.0 Minutes Cal Write",
       "Map Storage": "Up to 5 Selectable Calibrations (91 Oct, 95 Oct, 98 Oct, Valet, E85)",
       "Safety Limits": "Active Knock Detection & EGT Exhaust Gas Temp Reducer",
+      "Payment Method": "Cash on Delivery (COD) / Pay at Bay",
       "Warranty": "2 Years Official Apex Hardware & Binary Map Warranty"
     },
     warranty: "2 Years Unlimited Support",
@@ -69,15 +70,8 @@ export const SAMPLE_PRODUCTS: Product[] = [
         author: "Bader Al-Mutawa",
         rating: 5,
         vehicle: "Nissan Patrol Nismo 2022",
-        comment: "Flashed Stage 2 at Apex Shuwaikh. Car gained +72 WHP on the dyno. Throttle response is instant and the burble map sounds incredible!",
+        comment: "Flashed Stage 2 at Apex Shuwaikh. Car gained +72 WHP on the dyno. Paid cash at arrival.",
         date: "2 days ago"
-      },
-      {
-        author: "Fahad Al-Kandari",
-        rating: 5,
-        vehicle: "Ford Mustang GT 2021",
-        comment: "Easy installation in under 20 minutes. Map switching via steering wheel controls works seamlessly.",
-        date: "1 week ago"
       }
     ]
   },
@@ -101,11 +95,11 @@ export const SAMPLE_PRODUCTS: Product[] = [
     longDescription: "📱 Ultra-affordable plug & play Bluetooth scanner compatible with Torque Pro, OBD Fusion, Car Scanner ELM, and GaragePro. 🔍 Clear engine check lights in seconds. 🚗 Works on 99% of cars made after 1996 in Kuwait.",
     image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80", // Scanner Unit
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Packaging & PCB
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80", // In-Car OBD2 port
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Mobile app screen
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80"  // Diagnostics test
+      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80", // Scanner Dongle
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80", // Bluetooth PCB
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80", // Smartphone Telemetry
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Port Connection
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80"  // Diagnostics Live
     ],
     inTheBox: [
       "Apex ELM327 Bluetooth 5.0 Diagnostic Dongle",
@@ -117,6 +111,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
       "Operating Voltage": "9V - 16V DC",
       "Wireless Range": "Up to 10 Meters",
       "Live Telemetry PIDs": "RPM, STFT/LTFT, O2 Sensor Volts, Coolant Temp, Speed, Intake Pressure",
+      "Payment Option": "Cash on Delivery in Kuwait (9 KWD)",
       "Warranty": "1 Year Free Replacement Warranty"
     },
     warranty: "1 Year Replacement Warranty",
@@ -126,7 +121,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
         author: "Nawaf Al-Ajmi",
         rating: 5,
         vehicle: "Toyota Camry 2019",
-        comment: "For 9 KWD this is a lifesaver. Identified code P0171 immediately and turned off the check engine light on my phone.",
+        comment: "For 9 KWD cash on delivery, this is a lifesaver. Identified code P0171 immediately and turned off the check engine light on my phone.",
         date: "3 days ago"
       }
     ]
@@ -152,10 +147,10 @@ export const SAMPLE_PRODUCTS: Product[] = [
     image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80", // Unit Front
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Dual Solenoids
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Wiring & OLED HUD
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Underhood Plumbing
-      "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1000&q=80"  // In-Cabin Display View
+      "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=1000&q=80", // Dual Solenoids Assembly
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80", // Microcontroller HUD
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80", // Vacuum Plumbing
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80"  // In-Cabin Display
     ],
     inTheBox: [
       "Apex Pro Boost Controller OLED Head Unit (52mm Gauge Style)",
@@ -204,11 +199,11 @@ export const SAMPLE_PRODUCTS: Product[] = [
     longDescription: "⛽ Essential hardware upgrade for Stage 2 & 3 tuning setups to prevent dangerous lean fuel conditions under boost. 🛡️ 100% Genuine TI Automotive made in USA.",
     image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Fuel Pump
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Strainer & Wiring
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Tank Basket Fitment
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80", // Flow Testing
-      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80"  // Installed in Hangar
+      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Fuel Pump Unit
+      "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=1000&q=80", // Filter Strainer & Pigtail
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80", // Submersible Hose
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80", // High Amp Relay
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80"  // Tank Drop-in
     ],
     inTheBox: [
       "Walbro F90000274 450LPH In-Tank Fuel Pump",
@@ -263,11 +258,11 @@ export const SAMPLE_PRODUCTS: Product[] = [
     longDescription: "⚡ Maximum spark stability under high cylinder pressures. 🏎️ Prevents high-rpm misfires and spark blow-out under boost. 🛡️ Trivalent metal plating provides superior anti-corrosion properties.",
     image: "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Spark Plugs Set
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Electrode Close-up
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Cylinder Head Install
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80", // Dyno testing
-      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80"  // Packaging Authenticity
+      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Spark Plugs Box
+      "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=1000&q=80", // Electrode Detail
+      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Engine Installation
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80", // Gap Measurement Tool
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80"  // 8 Plugs Layout
     ],
     inTheBox: [
       "8x Genuine NGK Laser Iridium Spark Plugs (Individual Factory Sleeved)",
@@ -319,10 +314,10 @@ export const SAMPLE_PRODUCTS: Product[] = [
     image: "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1000&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1000&q=80", // Unit Front HUD
-      "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1000&q=80", // In-Car Windshield Mount
-      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80", // Track Day Telemetry
-      "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=1000&q=80", // Drag Strip Mode
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80"  // Mobile App Analysis
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80", // In-Car Windshield Mount
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80", // Track Telemetry Screen
+      "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=1000&q=80", // Drag Mode
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80"  // GPS Antenna
     ],
     inTheBox: [
       "Apex Track Telemetry 20Hz GPS Display Unit",
@@ -448,6 +443,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       <img 
                         src={product.image} 
                         alt={product.name} 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+                        }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                       />
                       <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-mono font-bold text-slate-700">
@@ -495,7 +493,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                   {/* Footer */}
                   <div className="p-6 pt-0 border-t border-slate-100 flex items-center justify-between mt-auto">
                     <div>
-                      <div className="text-[10px] font-bold uppercase text-slate-400">{isAr ? 'السعر' : 'PRICE'}</div>
+                      <div className="text-[10px] font-bold uppercase text-slate-400">{isAr ? 'السعر نقداً' : 'CASH PRICE'}</div>
                       <div className="text-2xl font-black text-slate-900">
                         {product.price} <span className="text-xs text-slate-500 font-normal">KWD</span>
                       </div>

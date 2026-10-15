@@ -14,9 +14,7 @@ import {
   Home,
   Tag,
   User as UserIcon,
-  LogOut,
-  Package,
-  Layers
+  LogOut
 } from 'lucide-react';
 import { Language, Product, Vehicle, GarageService, DetailItem, PageView, User } from '../types';
 
@@ -105,9 +103,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-sky-100 shadow-sm">
+    <header 
+      className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm transition-colors duration-200"
+      style={{
+        backgroundColor: 'var(--header-bg, #0f172a)',
+        borderColor: 'rgba(255, 255, 255, 0.1)'
+      }}
+    >
       {/* Top Utility Bar */}
-      <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-cyan-700 text-white text-xs py-1.5 px-4 sm:px-6">
+      <div 
+        className="text-white text-xs py-1.5 px-4 sm:px-6 transition-colors duration-200"
+        style={{
+          backgroundColor: 'var(--primary-accent, #0284c7)'
+        }}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <a 
@@ -116,17 +125,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:underline font-medium"
             >
-              <MapPin className="w-3.5 h-3.5 text-amber-300" />
+              <MapPin className="w-3.5 h-3.5" style={{ color: 'var(--secondary-accent, #f59e0b)' }} />
               <span>{isAr ? '📍 الشويخ الصناعية 1 - الكويت' : '📍 Shuwaikh Industrial 1, Kuwait'}</span>
             </a>
-            <span className="hidden md:inline text-sky-300">|</span>
-            <span className="hidden md:inline text-sky-100 font-medium">
+            <span className="hidden md:inline opacity-40">|</span>
+            <span className="hidden md:inline font-medium opacity-95">
               {isAr ? '⚡ متوفر حجز فوري وخدمة فحص كمبيوتر' : '⚡ Certified European & Desert Performance Workshop'}
             </span>
           </div>
 
           <div className="flex items-center gap-4">
-            <a href="tel:+96522002739" className="flex items-center gap-1 hover:text-amber-300 font-bold">
+            <a href="tel:+96522002739" className="flex items-center gap-1 hover:opacity-80 font-bold">
               <PhoneCall className="w-3.5 h-3.5" />
               <span>+965 2200-APEX</span>
             </a>
@@ -136,7 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onToggleLanguage}
               className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider transition-colors"
             >
-              <Globe className="w-3 h-3 text-amber-300" />
+              <Globe className="w-3 h-3" style={{ color: 'var(--secondary-accent, #f59e0b)' }} />
               <span>{isAr ? 'English' : 'عربي'}</span>
             </button>
           </div>
@@ -151,14 +160,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => handleLinkClick('home')} 
           className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
         >
-          <div className="w-11 h-11 bg-sky-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-sky-600/30 group-hover:bg-sky-500 transition-all">
+          <div 
+            className="w-11 h-11 text-white rounded-xl flex items-center justify-center shadow-md transition-all"
+            style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
+          >
             <Wrench className="w-6 h-6 stroke-[2.2]" />
           </div>
           <div>
-            <div className="text-2xl font-black tracking-tight text-slate-900 leading-none">
-              APEX<span className="text-sky-600">TORQUE</span>
+            <div className="text-2xl font-black tracking-tight text-white leading-none">
+              APEX<span style={{ color: 'var(--primary-accent, #0284c7)' }}>TORQUE</span>
             </div>
-            <div className="text-[10px] font-bold tracking-widest text-slate-500 uppercase mt-0.5">
+            <div className="text-[10px] font-bold tracking-widest text-slate-300 uppercase mt-0.5">
               {isAr ? 'كراج وأوتو ستور الكويت' : 'GARAGE & AUTO STORE'}
             </div>
           </div>
@@ -177,13 +189,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               onFocus={() => setIsSearchOpen(true)}
               placeholder={isAr ? 'ابحث عن قطع الغيار، الخدمات، كود العطل...' : 'Search parts, repairs, OBD2 codes, cars...'}
-              className="w-full bg-slate-100/90 border border-slate-200 rounded-full pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 transition-all"
+              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-full pl-10 pr-4 py-2 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:bg-slate-800 focus:ring-2 focus:ring-sky-500/20 transition-all"
             />
           </div>
 
           {/* Search Dropdown Results */}
           {isSearchOpen && searchQuery.trim() !== '' && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-sky-100 p-2 z-50 overflow-hidden">
+            <div 
+              className="absolute top-full left-0 right-0 mt-2 rounded-2xl shadow-xl border p-2 z-50 overflow-hidden"
+              style={{
+                backgroundColor: 'var(--card-bg, #ffffff)',
+                borderColor: 'rgba(0,0,0,0.1)'
+              }}
+            >
               <div className="text-[11px] font-bold text-slate-400 px-3 py-1.5 uppercase tracking-wider">
                 {isAr ? 'نتائج البحث الفورية' : 'Live Matching Results'}
               </div>
@@ -193,20 +211,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div
                       key={idx}
                       onClick={() => handleResultClick(item)}
-                      className="flex items-center justify-between p-2 rounded-xl hover:bg-sky-50 cursor-pointer transition-colors"
+                      className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-100/80 cursor-pointer transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <img 
                           src={item.image} 
                           alt={item.title} 
-                          className="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0" 
+                          className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" 
                         />
                         <div>
                           <div className="text-xs font-bold text-slate-900 line-clamp-1">{item.title}</div>
-                          <div className="text-[10px] text-sky-600 font-medium">{item.category}</div>
+                          <div className="text-[10px] font-medium" style={{ color: 'var(--primary-accent, #0284c7)' }}>
+                            {item.category}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-xs font-black text-sky-700 font-mono shrink-0">
+                      <div className="text-xs font-black font-mono shrink-0" style={{ color: 'var(--primary-accent, #0284c7)' }}>
                         {item.priceDisplay ? item.priceDisplay : `${item.price} KWD`}
                       </div>
                     </div>
@@ -222,12 +242,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Center / Navigation Links for Standalone Pages */}
-        <nav className="hidden xl:flex items-center gap-5 text-xs font-bold text-slate-700 uppercase tracking-wide">
+        <nav className="hidden xl:flex items-center gap-5 text-xs font-bold text-slate-200 uppercase tracking-wide">
           <button 
             onClick={() => handleLinkClick('home')} 
             className={`transition-colors flex items-center gap-1 py-1 px-2 rounded-lg ${
-              activePage === 'home' ? 'text-sky-600 bg-sky-50 font-black' : 'hover:text-sky-600'
+              activePage === 'home' ? 'text-white bg-white/10 font-black' : 'hover:text-white'
             }`}
+            style={{ color: activePage === 'home' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Home className="w-3.5 h-3.5" />
             <span>{isAr ? 'الرئيسية' : 'Home'}</span>
@@ -236,8 +257,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button 
             onClick={() => handleLinkClick('diagnostics')} 
             className={`transition-colors flex items-center gap-1 py-1 px-2 rounded-lg ${
-              activePage === 'diagnostics' ? 'text-sky-600 bg-sky-50 font-black' : 'hover:text-sky-600'
+              activePage === 'diagnostics' ? 'text-white bg-white/10 font-black' : 'hover:text-white'
             }`}
+            style={{ color: activePage === 'diagnostics' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Wrench className="w-3.5 h-3.5" />
             <span>{isAr ? 'الصيانة والتصليح' : 'Diagnosing & Repair'}</span>
@@ -246,8 +268,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button 
             onClick={() => handleLinkClick('performance')} 
             className={`transition-colors flex items-center gap-1 py-1 px-2 rounded-lg ${
-              activePage === 'performance' ? 'text-sky-600 bg-sky-50 font-black' : 'hover:text-sky-600'
+              activePage === 'performance' ? 'text-white bg-white/10 font-black' : 'hover:text-white'
             }`}
+            style={{ color: activePage === 'performance' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Zap className="w-3.5 h-3.5" />
             <span>{isAr ? 'البرمجة والتعديل' : 'Performance'}</span>
@@ -256,8 +279,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button 
             onClick={() => handleLinkClick('parts')} 
             className={`transition-colors flex items-center gap-1 py-1 px-2 rounded-lg ${
-              activePage === 'parts' ? 'text-sky-600 bg-sky-50 font-black' : 'hover:text-sky-600'
+              activePage === 'parts' ? 'text-white bg-white/10 font-black' : 'hover:text-white'
             }`}
+            style={{ color: activePage === 'parts' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Tag className="w-3.5 h-3.5" />
             <span>{isAr ? 'قطع الغيار والأجهزة' : 'Auto Parts & Tools'}</span>
@@ -266,8 +290,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button 
             onClick={() => handleLinkClick('showroom')} 
             className={`transition-colors flex items-center gap-1 py-1 px-2 rounded-lg ${
-              activePage === 'showroom' ? 'text-sky-600 bg-sky-50 font-black' : 'hover:text-sky-600'
+              activePage === 'showroom' ? 'text-white bg-white/10 font-black' : 'hover:text-white'
             }`}
+            style={{ color: activePage === 'showroom' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Car className="w-3.5 h-3.5" />
             <span>{isAr ? 'سيارات للبيع' : 'Showroom'}</span>
@@ -281,9 +306,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             {currentUser ? (
               <button
                 onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-sky-50 border border-slate-200 text-slate-800 transition-all text-xs font-bold"
+                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white transition-all text-xs font-bold"
               >
-                <div className="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center text-xs font-black">
+                <div 
+                  className="w-7 h-7 rounded-lg text-white flex items-center justify-center text-xs font-black"
+                  style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
+                >
                   {currentUser.name.charAt(0).toUpperCase()}
                 </div>
                 <span className="hidden md:inline max-w-[100px] truncate">{currentUser.name}</span>
@@ -291,7 +319,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-sky-50 border border-slate-200 text-slate-700 hover:text-sky-600 transition-all text-xs font-bold"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white transition-all text-xs font-bold"
               >
                 <UserIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">{isAr ? 'تسجيل الدخول' : 'Sign In'}</span>
@@ -300,7 +328,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Account Dropdown */}
             {accountMenuOpen && currentUser && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 space-y-1">
+              <div 
+                className="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl border p-2 z-50 space-y-1"
+                style={{
+                  backgroundColor: 'var(--card-bg, #ffffff)',
+                  borderColor: 'rgba(0,0,0,0.1)'
+                }}
+              >
                 <div className="px-3 py-2 border-b border-slate-100">
                   <div className="text-xs font-bold text-slate-900 truncate">{currentUser.name}</div>
                   <div className="text-[10px] text-slate-500 truncate">{currentUser.email}</div>
@@ -308,9 +342,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <button
                   onClick={() => handleLinkClick('account')}
-                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-xs font-bold text-slate-700 flex items-center gap-2 transition-colors"
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-2 transition-colors"
                 >
-                  <Wrench className="w-4 h-4 text-sky-600" />
+                  <Wrench className="w-4 h-4" style={{ color: 'var(--primary-accent, #0284c7)' }} />
                   <span>{isAr ? 'حجوزاتي وطلباتي' : 'My Bookings & Orders'}</span>
                 </button>
 
@@ -318,9 +352,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => {
                     handleLinkClick('account');
                   }}
-                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-xs font-bold text-slate-700 flex items-center gap-2 transition-colors"
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-2 transition-colors"
                 >
-                  <Car className="w-4 h-4 text-sky-600" />
+                  <Car className="w-4 h-4" style={{ color: 'var(--primary-accent, #0284c7)' }} />
                   <span>{isAr ? 'المركبات المحفوظة' : 'My Saved Vehicles'}</span>
                 </button>
 
@@ -341,21 +375,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Primary Appointment Button */}
           <button
             onClick={onOpenBooking}
-            className="hidden sm:flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider px-3.5 py-2.5 rounded-xl shadow-md shadow-sky-600/25 transition-all active:scale-95"
+            className="hidden sm:flex items-center gap-1.5 text-white font-bold text-xs uppercase tracking-wider px-3.5 py-2.5 rounded-xl shadow-md transition-all active:scale-95"
+            style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
           >
-            <Calendar className="w-4 h-4 text-amber-300" />
+            <Calendar className="w-4 h-4" style={{ color: 'var(--secondary-accent, #f59e0b)' }} />
             <span>{isAr ? 'حجز موعد' : 'Book Bay'}</span>
           </button>
 
           {/* Cart Trigger */}
           <button
             onClick={onOpenCart}
-            className="relative p-2.5 rounded-xl bg-slate-100 hover:bg-sky-50 border border-slate-200 text-slate-700 hover:text-sky-600 transition-all"
+            className="relative p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white transition-all"
             aria-label="Open Shopping Cart"
           >
             <ShoppingCart className="w-5 h-5" />
             {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-sky-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-md animate-bounce">
+              <span 
+                className="absolute -top-1.5 -right-1.5 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-md animate-bounce"
+                style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
+              >
                 {cartCount}
               </span>
             )}
@@ -364,7 +402,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 text-slate-700 hover:text-slate-900"
+            className="xl:hidden p-2 text-white hover:text-slate-300"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -373,50 +411,56 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="xl:hidden border-t border-slate-200 bg-white p-6 space-y-4 shadow-xl">
+        <div 
+          className="xl:hidden border-t p-6 space-y-4 shadow-xl text-white"
+          style={{ 
+            backgroundColor: 'var(--header-bg, #0f172a)',
+            borderColor: 'rgba(255, 255, 255, 0.1)'
+          }}
+        >
           <div className="mb-4">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isAr ? 'بحث سريع...' : 'Search catalog...'}
-              className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-sm"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white"
             />
           </div>
           <button
             onClick={() => handleLinkClick('home')}
-            className={`block w-full text-left font-bold py-2 ${activePage === 'home' ? 'text-sky-600' : 'text-slate-800'}`}
+            className={`block w-full text-left font-bold py-2 ${activePage === 'home' ? 'text-sky-400 font-black' : 'text-slate-200'}`}
           >
             🏠 {isAr ? 'الصفحة الرئيسية' : 'Home'}
           </button>
           <button
             onClick={() => handleLinkClick('diagnostics')}
-            className={`block w-full text-left font-bold py-2 ${activePage === 'diagnostics' ? 'text-sky-600' : 'text-slate-800'}`}
+            className={`block w-full text-left font-bold py-2 ${activePage === 'diagnostics' ? 'text-sky-400 font-black' : 'text-slate-200'}`}
           >
             🛠️ {isAr ? 'خدمات الصيانة وتصليح الأعطال' : 'Diagnosing & Repairing'}
           </button>
           <button
             onClick={() => handleLinkClick('performance')}
-            className={`block w-full text-left font-bold py-2 ${activePage === 'performance' ? 'text-sky-600' : 'text-slate-800'}`}
+            className={`block w-full text-left font-bold py-2 ${activePage === 'performance' ? 'text-sky-400 font-black' : 'text-slate-200'}`}
           >
             ⚡ {isAr ? 'قطع الغيار والبرمجة' : 'Performance Upgrades'}
           </button>
           <button
             onClick={() => handleLinkClick('parts')}
-            className={`block w-full text-left font-bold py-2 ${activePage === 'parts' ? 'text-sky-600' : 'text-slate-800'}`}
+            className={`block w-full text-left font-bold py-2 ${activePage === 'parts' ? 'text-sky-400 font-black' : 'text-slate-200'}`}
           >
             🔩 {isAr ? 'قطع غيار ميكانيكية وأجهزة فحص' : 'Auto Parts & Hardware Tools'}
           </button>
           <button
             onClick={() => handleLinkClick('showroom')}
-            className={`block w-full text-left font-bold py-2 ${activePage === 'showroom' ? 'text-sky-600' : 'text-slate-800'}`}
+            className={`block w-full text-left font-bold py-2 ${activePage === 'showroom' ? 'text-sky-400 font-black' : 'text-slate-200'}`}
           >
             🏎️ {isAr ? 'معرض سيارات للبيع' : 'Vehicles For Sale'}
           </button>
           {currentUser && (
             <button
               onClick={() => handleLinkClick('account')}
-              className={`block w-full text-left font-bold py-2 ${activePage === 'account' ? 'text-sky-600' : 'text-slate-800'}`}
+              className={`block w-full text-left font-bold py-2 ${activePage === 'account' ? 'text-sky-400 font-black' : 'text-slate-200'}`}
             >
               👤 {isAr ? 'حسابي وحجوزاتي' : 'My Bookings & Profile'}
             </button>
@@ -426,7 +470,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               setMobileMenuOpen(false);
               onOpenBooking();
             }}
-            className="w-full py-3 bg-sky-600 text-white font-bold rounded-xl text-center shadow-lg"
+            className="w-full py-3 text-white font-bold rounded-xl text-center shadow-lg"
+            style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
           >
             📅 {isAr ? 'حجز موعد فحص فوري' : 'Book Service Appointment'}
           </button>

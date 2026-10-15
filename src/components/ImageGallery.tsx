@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+export const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80";
+
 interface ImageGalleryProps {
   images: string[];
   altTitle: string;
@@ -14,11 +16,9 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, altTitle, ba
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Strict isolation: Normalize images safely for this exact item
-  const gallery = images && images.length > 0 ? images : [
-    "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80"
-  ];
+  const gallery = images && images.length > 0 ? images : [FALLBACK_IMAGE];
 
-  // Reset to the first image whenever the item ID or image list changes
+  // Reset to first image whenever item identity changes
   useEffect(() => {
     setCurrentIndex(0);
   }, [itemId, images]);
@@ -51,6 +51,9 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, altTitle, ba
             key={`${itemId || 'gal'}-${currentIndex}-${gallery[currentIndex]}`}
             src={gallery[currentIndex]} 
             alt={`${altTitle} - View ${currentIndex + 1}`}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+            }}
             initial={{ opacity: 0, scale: 1.04 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
@@ -123,6 +126,9 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, altTitle, ba
               <img 
                 src={imgUrl} 
                 alt={`Thumbnail ${idx + 1}`} 
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+                }}
                 className="w-full h-full object-cover" 
               />
             </button>
@@ -147,6 +153,9 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, altTitle, ba
               <img 
                 src={gallery[currentIndex]} 
                 alt={`${altTitle} Fullscreen View`}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+                }}
                 className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl" 
               />
 

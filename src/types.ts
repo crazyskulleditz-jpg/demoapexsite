@@ -51,6 +51,7 @@ export interface BookingRecord {
 
 export interface OrderRecord {
   id: string;
+  userId?: string;
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
@@ -97,11 +98,21 @@ export interface ReceiptBreakdown {
   paymentMethod: string;
 }
 
+export type StoreCategory = 
+  | 'Performance Upgrades' 
+  | 'Auto Parts & Hardware' 
+  | 'Diagnosing & Repairing' 
+  | 'Vehicles for Sale'
+  | 'Performance'
+  | 'Auto Parts & Tools'
+  | 'Diagnostics & Repairing'
+  | 'Vehicle Sales';
+
 export interface Product {
   id: number;
   name: string;
   nameAr?: string;
-  category: 'Performance Upgrades' | 'Auto Parts & Hardware' | 'Diagnosing & Repairing' | 'Vehicles for Sale';
+  category: StoreCategory;
   price: number; // in KWD
   priceDisplay?: string;
   rating: number;
@@ -111,12 +122,13 @@ export interface Product {
   descriptionAr?: string;
   longDescription?: string;
   image: string;
+  images?: string[];
   gallery: string[];
   stock: number;
   partNumber: string;
   oemCrossReference?: string;
   material?: string;
-  installDifficulty?: 'Easy (DIY)' | 'Medium (Basic Garage)' | 'Expert (Master Mechanic)' | '1/5 (Plug & Play)' | '2/5 (Basic Hand Tools)' | '3/5 (Moderate Garage)' | '4/5 (Advanced Tuner)' | '5/5 (Engine Out Rebuild)';
+  installDifficulty?: 'Easy (DIY)' | 'Medium (Basic Garage)' | 'Expert (Master Mechanic)' | '1/5 (Plug & Play)' | '2/5 (Basic Hand Tools)' | '3/5 (Moderate Garage)' | '4/5 (Advanced Tuner)' | '5/5 (Engine Out Rebuild)' | string;
   installTime?: string;
   inTheBox?: string[];
   specsTable?: Record<string, string>;
@@ -158,6 +170,7 @@ export interface Vehicle {
   inspectionHistory: string;
   price: number; // in KWD
   image: string;
+  images?: string[];
   gallery: string[];
   badge: string;
   featured?: boolean;
@@ -166,6 +179,8 @@ export interface Vehicle {
   warranty: string;
   specs: string[];
   specsTable?: Record<string, string>;
+  compatibility?: string[];
+  inTheBox?: string[];
   reviews?: Array<{
     author: string;
     rating: number;
@@ -187,6 +202,7 @@ export interface GarageService {
   longDescription?: string;
   icon: string;
   image: string;
+  images?: string[];
   gallery: string[];
   popular?: boolean;
   isConsultation?: boolean;
@@ -195,6 +211,8 @@ export interface GarageService {
   workSteps?: string[];
   includedFluids?: string[];
   specsTable?: Record<string, string>;
+  compatibility?: string[];
+  inTheBox?: string[];
   warranty: string;
   reviews?: Array<{
     author: string;

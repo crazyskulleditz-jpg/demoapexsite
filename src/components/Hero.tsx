@@ -9,11 +9,10 @@ import {
   Wrench, 
   Car, 
   Zap,
-  Tag
+  Tag,
+  ShieldCheck
 } from 'lucide-react';
 import { Language, PageView } from '../types';
-import { useSiteConfig } from '../context/SiteConfigContext';
-import { EditableText } from './EditableText';
 
 interface HeroProps {
   language: Language;
@@ -27,7 +26,6 @@ export const Hero: React.FC<HeroProps> = ({
   onNavigatePage
 }) => {
   const isAr = language === 'ar';
-  const { config, updateNestedConfig, isEditMode } = useSiteConfig();
 
   const categoryCards = [
     {
@@ -95,28 +93,30 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-[1.08] mb-6">
-              <EditableText
-                tagName="h1"
-                value={config.hero.title}
-                onChange={(val) => updateNestedConfig('hero', 'title', val)}
-                className="inline-block"
-              />
+              {isAr ? (
+                <>
+                  دقة هندسية في <br />
+                  <span className="text-sky-600 underline decoration-sky-300">الصيانة والتعديل.</span>
+                </>
+              ) : (
+                <>
+                  Precision Garage Care &amp; <br />
+                  <span className="text-sky-600 underline decoration-sky-300">High-Performance Tuning.</span>
+                </>
+              )}
             </h1>
 
-            <div className="text-base sm:text-lg text-slate-600 mb-8 max-w-xl leading-relaxed">
-              <EditableText
-                tagName="p"
-                value={config.hero.subtitle}
-                onChange={(val) => updateNestedConfig('hero', 'subtitle', val)}
-              />
-            </div>
+            <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-xl leading-relaxed">
+              {isAr
+                ? 'فريق متخصص في صيانة المحركات، فحص الأعطال بالكمبيوتر، برمجة ستيج 1 و 2، قطع غيار أصلية، ومعرض سيارات معتمد في الشويخ الصناعية.'
+                : 'Certified mechanical overhauls, high-speed dyno ECU calibrations, genuine OEM performance hardware, and verified pre-owned vehicle showroom in Shuwaikh.'}
+            </p>
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-3.5">
               <button 
                 onClick={onOpenBooking}
-                style={{ backgroundColor: config.theme.primaryColor }}
-                className="px-7 py-4 text-white font-bold rounded-2xl shadow-lg shadow-sky-600/30 flex items-center gap-2 transition-all active:scale-95 hover:opacity-90"
+                className="px-7 py-4 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-2xl shadow-lg shadow-sky-600/30 flex items-center gap-2 transition-all active:scale-95"
               >
                 <Calendar className="w-5 h-5 text-amber-300" />
                 <span>{isAr ? '📅 حجز موعد كراج فوري' : '📅 Book Service Appointment'}</span>
@@ -161,7 +161,7 @@ export const Hero: React.FC<HeroProps> = ({
             <div className="bg-white rounded-3xl p-4 shadow-2xl shadow-sky-900/10 border border-sky-100 relative overflow-hidden group">
               <div className="h-64 sm:h-72 rounded-2xl overflow-hidden relative">
                 <img 
-                  src={config.hero.bgImage} 
+                  src="https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80" 
                   alt="Apex Torque Garage"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                 />
@@ -181,20 +181,6 @@ export const Hero: React.FC<HeroProps> = ({
                   </h3>
                 </div>
               </div>
-
-              {isEditMode && (
-                <div className="mt-3 p-3 bg-slate-900 rounded-xl text-left border border-slate-700">
-                  <label className="text-xs text-sky-400 font-bold block mb-1">
-                    {isAr ? 'رابط صورة الخلفية:' : 'Edit Hero Image URL:'}
-                  </label>
-                  <input
-                    type="text"
-                    value={config.hero.bgImage}
-                    onChange={(e) => updateNestedConfig('hero', 'bgImage', e.target.value)}
-                    className="w-full text-xs p-2 text-slate-900 bg-white rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-              )}
 
               {/* Service Stat Box */}
               <div className="p-4 grid grid-cols-2 gap-3 mt-1">

@@ -1,6 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSiteContext } from '../context/SiteContext';
-import { Product, GarageService, Vehicle, Language, OrderRecord, BookingRecord, TestDriveRecord } from '../types';
+import { 
+  Product, 
+  GarageService, 
+  Vehicle, 
+  Language, 
+  OrderRecord, 
+  BookingRecord, 
+  TestDriveRecord, 
+  User, 
+  StoreCategory 
+} from '../types';
 import { FontStyleOption } from '../types/admin';
 import { 
   ShieldAlert, 
@@ -28,16 +38,26 @@ import {
   Upload, 
   ShoppingCart, 
   Users, 
-  Calendar, 
-  Clock, 
-  FileText, 
   Sliders, 
   Copy, 
-  CheckCircle,
-  ToggleLeft,
-  ToggleRight,
-  ExternalLink,
-  Search
+  ToggleLeft, 
+  ToggleRight, 
+  Search, 
+  Mail, 
+  UserX, 
+  Image as ImageIcon, 
+  Video, 
+  Globe, 
+  Sparkles,
+  Star,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  FileText,
+  ListPlus,
+  Maximize2,
+  SlidersHorizontal,
+  Square
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -49,11 +69,20 @@ interface AdminDashboardProps {
   onDeleteOrder?: (id: string) => void;
   bookings?: BookingRecord[];
   onUpdateBooking?: (id: string, updated: Partial<BookingRecord>) => void;
+  onDeleteBooking?: (id: string) => void;
   testDrives?: TestDriveRecord[];
   onUpdateTestDrive?: (id: string, updated: Partial<TestDriveRecord>) => void;
+  onDeleteTestDrive?: (id: string) => void;
 }
 
 const SESSION_STORAGE_KEY = 'apex_admin_auth';
+
+export const STORE_CATEGORIES: { id: StoreCategory; labelEn: string; labelAr: string; type: 'product' | 'service' | 'vehicle' }[] = [
+  { id: 'Performance Upgrades', labelEn: 'Performance Upgrades', labelAr: 'البرمجة وتعديل الأداء', type: 'product' },
+  { id: 'Auto Parts & Hardware', labelEn: 'Auto Parts & Tools', labelAr: 'قطع الغيار والأجهزة', type: 'product' },
+  { id: 'Diagnosing & Repairing', labelEn: 'Diagnostics & Repairing', labelAr: 'الصيانة وتصليح الأعطال', type: 'service' },
+  { id: 'Vehicles for Sale', labelEn: 'Vehicle Sales (Showroom)', labelAr: 'معرض السيارات للبيع', type: 'vehicle' }
+];
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   language,
@@ -64,8 +93,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onDeleteOrder,
   bookings = [],
   onUpdateBooking,
+  onDeleteBooking,
   testDrives = [],
-  onUpdateTestDrive
+  onUpdateTestDrive,
+  onDeleteTestDrive
 }) => {
   const {
     config,
@@ -98,10 +129,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState(false);
 
-  // Tabs: listings | orders | crm | builder | theme | business
-  const [activeTab, setActiveTab] = useState<'listings' | 'orders' | 'crm' | 'builder' | 'theme' | 'business'>('listings');
+  // Tabs: listings | orders | bookings | testDrives | crm | builder | theme | business
+  const [activeTab, setActiveTab] = useState<'listings' | 'orders' | 'bookings' | 'testDrives' | 'crm' | 'builder' | 'theme' | 'business'>('listings');
   const [listingCategory, setListingCategory] = useState<'products' | 'services' | 'vehicles'>('products');
   const [listingSearch, setListingSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [bookingSearch, setBookingSearch] = useState('');
+  const [testDriveSearch, setTestDriveSearch] = useState('');
+
+  // Branding, Name, Motto, Favicon & Background state
+  const [siteName, setSiteName] = useState(config.siteName || 'ApexTorque Performance');
+  const [motto, setMotto] = useState(config.motto || 'Kuwait Premier Dyno & Tuning Hub');
+  const [logoUrl, setLogoUrl] = useState(config.logoUrl || '');
+  const [faviconUrl, setFaviconUrl] = useState(config.faviconUrl || '');
+
+  // Dynamic Background System
+  const [bgType, setBgType] = useState<'none' | 'image' | 'video'>(config.bgType || 'none');
+  const [bgMediaUrl, setBgMediaUrl] = useState(config.bgMediaUrl || '');
+  const [bgOverlayOpacity, setBgOverlayOpacity] = useState<number>(config.bgOverlayOpacity ?? 0.15);
 
   // Business info form state
   const [phone, setPhone] = useState(config.phone || '+965 2200 2739');
@@ -109,19 +154,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [location, setLocation] = useState(config.location || 'Shuwaikh Industrial Area 1, Block 2, Street 18, Kuwait City');
   const [businessSavedToast, setBusinessSavedToast] = useState(false);
 
-  // Theme & Colors Customizer state
+  // Color Pickers, Borders, Neon & Typography state
   const [themeColor, setThemeColor] = useState(config.themeColor || '#0284c7');
-  const [accentColor, setAccentColor] = useState(config.accentColor || '#f59e0b');
+  const [secondaryAccent, setSecondaryAccent] = useState(config.secondaryAccent || '#f59e0b');
   const [headerBg, setHeaderBg] = useState(config.headerBg || '#0f172a');
-  const [headerText, setHeaderText] = useState(config.headerText || '#ffffff');
-  const [cardBg, setCardBg] = useState(config.cardBg || '#ffffff');
   const [footerBg, setFooterBg] = useState(config.footerBg || '#0b0f19');
+  const [cardBg, setCardBg] = useState(config.cardBg || '#1e293b');
+  const [pageBg, setPageBg] = useState(config.pageBg || '#0f172a');
   const [fontStyle, setFontStyle] = useState<FontStyleOption>(config.fontStyle || 'sans');
   const [customFontFamily, setCustomFontFamily] = useState(config.customFontFamily || '');
+  const [fontSizeScale, setFontSizeScale] = useState(config.fontSizeScale || '100%');
+  const [cardBorderRadius, setCardBorderRadius] = useState(config.cardBorderRadius || '1.5rem');
+  const [cardBorderColor, setCardBorderColor] = useState(config.cardBorderColor || '#334155');
+  const [cardBorderWidth, setCardBorderWidth] = useState(config.cardBorderWidth || '1px');
+  const [enableCarbonPattern, setEnableCarbonPattern] = useState(config.enableCarbonPattern ?? true);
+  const [enableNeonGlow, setEnableNeonGlow] = useState(config.enableNeonGlow ?? true);
   const [themeSavedToast, setThemeSavedToast] = useState(false);
 
-  // Website Text Content Editor state (Shopify-like Section Editor)
-  const [logoUrl, setLogoUrl] = useState(config.logoUrl || '');
+  // Website Text Content Editor state
   const [announcementText, setAnnouncementText] = useState(config.announcementText || '⚡ Kuwait Premier Dyno Tuning & Performance Garage — Shuwaikh Branch');
   const [announcementTextAr, setAnnouncementTextAr] = useState(config.announcementTextAr || '⚡ كراج الأداء والبرمجة الأول في الكويت — فرع الشويخ');
   const [heroTitle, setHeroTitle] = useState(config.heroTitle || 'Kuwait Premier Automotive Dyno & Tuning Hub');
@@ -131,85 +181,218 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [servicesTitle, setServicesTitle] = useState(config.servicesTitle || 'Engineering Diagnostic & Repair Services');
   const [partsTitle, setPartsTitle] = useState(config.partsTitle || 'Performance Parts & Track Hardware');
   const [showroomTitle, setShowroomTitle] = useState(config.showroomTitle || 'Verified GCC Spec Pre-Owned Showroom');
-  const [footerAbout, setFooterAbout] = useState(config.footerAbout || 'State of the art automotive engineering center in Shuwaikh.');
   const [showAnnouncement, setShowAnnouncement] = useState(config.showAnnouncement ?? true);
   const [showObdScanner, setShowObdScanner] = useState(config.showObdScanner ?? true);
   const [showChatbot, setShowChatbot] = useState(config.showChatbot ?? true);
   const [showSalesToast, setShowSalesToast] = useState(config.showSalesToast ?? true);
   const [builderSavedToast, setBuilderSavedToast] = useState(false);
 
-  // Listings Modal State
+  useEffect(() => {
+    setSiteName(config.siteName || 'ApexTorque Performance');
+    setMotto(config.motto || 'Kuwait Premier Dyno & Tuning Hub');
+    setLogoUrl(config.logoUrl || '');
+    setFaviconUrl(config.faviconUrl || '');
+    setBgType(config.bgType || 'none');
+    setBgMediaUrl(config.bgMediaUrl || '');
+    setBgOverlayOpacity(config.bgOverlayOpacity ?? 0.15);
+    setThemeColor(config.themeColor || '#0284c7');
+    setSecondaryAccent(config.secondaryAccent || '#f59e0b');
+    setHeaderBg(config.headerBg || '#0f172a');
+    setFooterBg(config.footerBg || '#0b0f19');
+    setCardBg(config.cardBg || '#1e293b');
+    setPageBg(config.pageBg || '#0f172a');
+    setFontStyle(config.fontStyle || 'sans');
+    setCustomFontFamily(config.customFontFamily || '');
+    setFontSizeScale(config.fontSizeScale || '100%');
+    setCardBorderRadius(config.cardBorderRadius || '1.5rem');
+    setCardBorderColor(config.cardBorderColor || '#334155');
+    setCardBorderWidth(config.cardBorderWidth || '1px');
+    setEnableCarbonPattern(config.enableCarbonPattern ?? true);
+    setEnableNeonGlow(config.enableNeonGlow ?? true);
+    setPhone(config.phone || '+965 2200 2739');
+    setWhatsapp(config.whatsapp || '+965 9900 1234');
+    setLocation(config.location || 'Shuwaikh Industrial Area 1, Block 2, Street 18, Kuwait City');
+  }, [config]);
+
+  // Listings Modal State & 5-Tab Structured Editor State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<'overview' | 'specs' | 'fitment' | 'box' | 'reviews'>('overview');
   const [editingItemType, setEditingItemType] = useState<'product' | 'service' | 'vehicle'>('product');
+  const [originalItemType, setOriginalItemType] = useState<'product' | 'service' | 'vehicle'>('product');
   const [editingItemId, setEditingItemId] = useState<string | number | null>(null);
 
-  // Listing Form Inputs
+  // 1. Overview & Description Tab Form Inputs
   const [formTitle, setFormTitle] = useState('');
   const [formTitleAr, setFormTitleAr] = useState('');
   const [formPrice, setFormPrice] = useState<number>(0);
-  const [formImage, setFormImage] = useState('');
+  const [formPriceDisplay, setFormPriceDisplay] = useState('');
+  const [formCategory, setFormCategory] = useState<StoreCategory>('Auto Parts & Hardware');
   const [formDescription, setFormDescription] = useState('');
   const [formDescriptionAr, setFormDescriptionAr] = useState('');
-  const [formCategory, setFormCategory] = useState('Auto Parts & Hardware');
+  const [formLongDescription, setFormLongDescription] = useState('');
   const [formBadge, setFormBadge] = useState('VERIFIED');
   const [formStock, setFormStock] = useState<number>(10);
   const [formPartNumber, setFormPartNumber] = useState('APX-1001');
-  const [formWarranty, setFormWarranty] = useState('1 Year Garage Replacement');
   const [formMileage, setFormMileage] = useState('12,000 KM');
   const [formYear, setFormYear] = useState<number>(2024);
   const [formEngine, setFormEngine] = useState('4.0L Twin-Turbo V8');
   const [formPower, setFormPower] = useState('650 HP');
   const [formDuration, setFormDuration] = useState('1.5 Hours');
 
-  // Customer Accounts directory from localStorage
-  const [registeredUsers] = useState<any[]>(() => {
+  // Multi-Image Gallery State
+  const [formImages, setFormImages] = useState<string[]>([]);
+  const [newImageUrlInput, setNewImageUrlInput] = useState('');
+
+  // 2. Detailed Specifications Tab Inputs
+  const [formSpecsList, setFormSpecsList] = useState<string[]>([]);
+  const [newSpecInput, setNewSpecInput] = useState('');
+  const [formSpecsTable, setFormSpecsTable] = useState<{ key: string; value: string }[]>([]);
+  const [newTableKey, setNewTableKey] = useState('');
+  const [newTableValue, setNewTableValue] = useState('');
+
+  // 3. Vehicle Compatibility Tab Inputs
+  const [formCompatibility, setFormCompatibility] = useState<string[]>([]);
+  const [newCompatInput, setNewCompatInput] = useState('');
+
+  // 4. In the Box & Warranty Tab Inputs
+  const [formWarranty, setFormWarranty] = useState('1 Year Garage Replacement');
+  const [formInstallDifficulty, setFormInstallDifficulty] = useState('Medium (Basic Garage)');
+  const [formInTheBox, setFormInTheBox] = useState<string[]>([]);
+  const [newBoxItemInput, setNewBoxItemInput] = useState('');
+
+  // 5. Reviews & Garage Logs Tab Inputs
+  const [formReviews, setFormReviews] = useState<Array<{
+    author: string;
+    rating: number;
+    comment: string;
+    date: string;
+    vehicle: string;
+  }>>([]);
+  const [newReviewAuthor, setNewReviewAuthor] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [newReviewVehicle, setNewReviewVehicle] = useState('');
+
+  // Customer Accounts Directory from localStorage
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
     try {
-      const stored = localStorage.getItem('apextorque_user');
-      return stored ? [JSON.parse(stored)] : [];
+      const stored = localStorage.getItem('apextorque_users');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      const single = localStorage.getItem('apextorque_user');
+      return single ? [JSON.parse(single)] : [];
     } catch {
       return [];
     }
   });
 
+  useEffect(() => {
+    const syncUsers = () => {
+      try {
+        const stored = localStorage.getItem('apextorque_users');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) setRegisteredUsers(parsed);
+        }
+      } catch (err) {
+        console.error('Error syncing registered users:', err);
+      }
+    };
+
+    window.addEventListener('storage', syncUsers);
+    window.addEventListener('apextorque_users_updated', syncUsers);
+    return () => {
+      window.removeEventListener('storage', syncUsers);
+      window.removeEventListener('apextorque_users_updated', syncUsers);
+    };
+  }, []);
+
+  const handleDeleteUser = (userId: string) => {
+    if (!window.confirm(isAr ? 'هل أنت متأكد من حذف حساب العميل من الدليل؟' : 'Delete this user profile from garage directory?')) return;
+    const updated = registeredUsers.filter(u => u.id !== userId);
+    setRegisteredUsers(updated);
+    try {
+      localStorage.setItem('apextorque_users', JSON.stringify(updated));
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const THEME_PRESETS = [
-    { name: 'Sky Blue (Default)', hex: '#0284c7' },
-    { name: 'Racing Amber / Gold', hex: '#d97706' },
-    { name: 'Apex Emerald', hex: '#059669' },
-    { name: 'Crimson Red Track', hex: '#dc2626' },
-    { name: 'Indigo Electric', hex: '#4f46e5' },
-    { name: 'Dark Gunmetal Slate', hex: '#0f172a' },
-    { name: 'Motorsport Orange', hex: '#ea580c' },
-    { name: 'Violet Hypercar', hex: '#7c3aed' }
+    { name: 'Sky Blue + Amber', primary: '#0284c7', secondary: '#f59e0b', headerBg: '#0f172a', footerBg: '#0b0f19', cardBg: '#1e293b', pageBg: '#0f172a' },
+    { name: 'Track Crimson + Gold', primary: '#dc2626', secondary: '#d97706', headerBg: '#18181b', footerBg: '#09090b', cardBg: '#27272a', pageBg: '#121215' },
+    { name: 'Apex Emerald + Lime', primary: '#059669', secondary: '#84cc16', headerBg: '#064e3b', footerBg: '#022c22', cardBg: '#0f382c', pageBg: '#041f17' },
+    { name: 'Electric Indigo + Cyan', primary: '#4f46e5', secondary: '#06b6d4', headerBg: '#1e1b4b', footerBg: '#0f172a', cardBg: '#2e2868', pageBg: '#131131' },
+    { name: 'Dark Gunmetal + Neon Orange', primary: '#ea580c', secondary: '#f97316', headerBg: '#090d16', footerBg: '#05070a', cardBg: '#1e293b', pageBg: '#0a0f1d' }
   ];
 
   const FONT_OPTIONS: { id: FontStyleOption; name: string; desc: string; sample: string }[] = [
     { id: 'sans', name: 'Inter & Geist (Modern Sans)', desc: 'Clean, high-performance automotive UI', sample: 'Modern Performance' },
-    { id: 'orbitron', name: 'Orbitron (Futuristic Motorsport)', desc: 'Aggressive HUD & racing telemetry styling', sample: 'SPEED TELEMETRY 850HP' },
+    { id: 'orbitron', name: 'Orbitron (Futuristic Motorsport HUD)', desc: 'Aggressive HUD & racing telemetry styling', sample: 'SPEED TELEMETRY 850HP' },
     { id: 'mono', name: 'JetBrains / Technical Mono', desc: 'ECU tuning and diagnostic look', sample: '0x7F DTC_DIAGNOSTICS' },
     { id: 'montserrat', name: 'Montserrat Geometric', desc: 'Bold, structured corporate auto brand', sample: 'PRECISION ENGINEERING' },
-    { id: 'serif', name: 'Playfair (Executive Luxury)', desc: 'Refined elegance for VIP showroom cars', sample: 'Exclusive VIP Fleet' },
-    { id: 'tajawal', name: 'Tajawal / Cairo (Arabic Optimized)', desc: 'Arabic-first high clarity font', sample: 'كراج الأداء والبرمجة' }
+    { id: 'tajawal', name: 'Tajawal / Cairo (Arabic Optimized)', desc: 'Arabic-first high clarity font', sample: 'كراج الأداء والبرمجة' },
+    { id: 'jakarta', name: 'Plus Jakarta Sans (Ultra Crisp)', desc: 'Super clean modern automotive design', sample: 'TURBOCHARGED V8 GCC' },
+    { id: 'syne', name: 'Syne / Avant-Garde Luxury', desc: 'Boutique supercar showroom styling', sample: 'EXOTIC PERFORMANCE' }
   ];
 
-  // Image Upload Handler (Converts file to Base64 data URL)
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (url: string) => void) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 8 * 1024 * 1024) {
-        alert('File size exceeds 8MB. Please choose a smaller image.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        if (uploadEvent.target?.result) {
-          setter(uploadEvent.target.result as string);
+  const FONT_SCALES = [
+    { label: 'Compact (90%)', value: '90%' },
+    { label: 'Balanced (95%)', value: '95%' },
+    { label: 'Default (100%)', value: '100%' },
+    { label: 'Comfortable (105%)', value: '105%' },
+    { label: 'Large (110%)', value: '110%' },
+    { label: 'Extra Large (115%)', value: '115%' }
+  ];
+
+  const BORDER_RADIUS_OPTIONS = [
+    { label: 'Sharp (0.5rem)', value: '0.5rem' },
+    { label: 'Smooth (1rem)', value: '1rem' },
+    { label: 'Curved (1.5rem)', value: '1.5rem' },
+    { label: 'Ultra Round (2rem)', value: '2rem' }
+  ];
+
+  const handleMultiFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach(file => {
+        if (file.size > 25 * 1024 * 1024) {
+          alert(`File ${file.name} exceeds 25MB.`);
+          return;
         }
-      };
-      reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+          if (uploadEvent.target?.result) {
+            setFormImages(prev => [...prev, uploadEvent.target!.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  // Login Authentication
+  const handleAddImageUrl = () => {
+    if (newImageUrlInput.trim()) {
+      setFormImages(prev => [...prev, newImageUrlInput.trim()]);
+      setNewImageUrlInput('');
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSetPrimaryImage = (index: number) => {
+    setFormImages(prev => {
+      const selected = prev[index];
+      const rest = prev.filter((_, i) => i !== index);
+      return [selected, ...rest];
+    });
+  };
+
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanUsername = usernameInput.trim().toLowerCase();
@@ -241,119 +424,246 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsAdminAuthenticated(false);
   };
 
-  // Open Add Modal
   const handleOpenAdd = (type: 'product' | 'service' | 'vehicle') => {
     setEditingItemType(type);
+    setOriginalItemType(type);
     setEditingItemId(null);
+    setModalTab('overview');
+    
     setFormTitle('');
     setFormTitleAr('');
     setFormPrice(type === 'product' ? 35 : type === 'service' ? 25 : 18500);
-    setFormImage('https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800');
-    setFormDescription('High performance component tuned for GCC conditions.');
+    setFormPriceDisplay('');
+    const defaultImg = 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800';
+    setFormImages([defaultImg]);
+    setNewImageUrlInput('');
+    setFormDescription('High performance GCC certified automotive component.');
     setFormDescriptionAr('قطعة أداء عالية الجودة ومطابقة لمواصفات الخليج.');
-    setFormCategory(type === 'product' ? 'Auto Parts & Hardware' : 'Diagnosing & Repairing');
+    setFormLongDescription('Engineered and tested in Kuwait climate conditions. Provides direct bolt-on installation, full telemetry diagnostics compatibility, and maximum thermal durability.');
+    setFormCategory(type === 'product' ? 'Auto Parts & Hardware' : type === 'service' ? 'Diagnosing & Repairing' : 'Vehicles for Sale');
     setFormBadge(type === 'vehicle' ? 'VERIFIED PRE-OWNED' : 'OFFICIAL WORKSHOP');
     setFormStock(15);
     setFormPartNumber(`APX-${Math.floor(1000 + Math.random() * 9000)}`);
-    setFormWarranty('1 Year Full Garage Replacement');
     setFormMileage('15,000 KM');
     setFormYear(2024);
     setFormEngine('4.0L V8 Bi-Turbo');
     setFormPower('550 HP');
     setFormDuration('1.5 Hours');
+
+    setFormSpecsList(['100% Genuine Certified GCC Fitment', 'Direct Bolt-On Fitment', 'Dyno Verified Performance']);
+    setNewSpecInput('');
+    setFormSpecsTable([
+      { key: 'Material / Construction', value: 'Aerospace Grade 6061-T6 Billet Aluminum' },
+      { key: 'Operating Temperature', value: '-20°C to 180°C' },
+      { key: 'Origin', value: 'German / GCC Verified Engineering' }
+    ]);
+    setNewTableKey('');
+    setNewTableValue('');
+
+    setFormCompatibility(['Universal GCC Platform', 'Toyota Land Cruiser (2018-2024)', 'Nissan Patrol Y62 V8', 'Porsche 911 / Cayman GT4']);
+    setNewCompatInput('');
+
+    setFormWarranty('1 Year Full Garage Replacement');
+    setFormInstallDifficulty('Medium (Basic Garage)');
+    setFormInTheBox(['1x Primary Assembly Unit', '2x Stainless Steel Mounting Brackets', '1x High-Temp O-Ring Seal Kit', '1x Signed Apex Dyno Quality Certificate']);
+    setNewBoxItemInput('');
+
+    setFormReviews([
+      { author: 'Hamad Al-Kandari', rating: 5, comment: 'Installed at Shuwaikh Bay #3. Exceptional response and zero issues in summer heat.', date: '2025-04-12', vehicle: 'Nissan Patrol Nismo' }
+    ]);
+    setNewReviewAuthor('');
+    setNewReviewRating(5);
+    setNewReviewComment('');
+    setNewReviewVehicle('');
+
     setIsModalOpen(true);
   };
 
-  // Open Edit Modal
   const handleOpenEdit = (type: 'product' | 'service' | 'vehicle', item: any) => {
     setEditingItemType(type);
+    setOriginalItemType(type);
     setEditingItemId(item.id);
+    setModalTab('overview');
+
     setFormTitle(item.name || item.title || '');
     setFormTitleAr(item.nameAr || item.titleAr || '');
     setFormPrice(item.price || 0);
-    setFormImage(item.image || '');
-    setFormDescription(item.description || item.longDescription || '');
+    setFormPriceDisplay(item.priceDisplay || '');
+
+    const existingImages: string[] = item.images && item.images.length > 0 
+      ? item.images 
+      : item.gallery && item.gallery.length > 0 
+      ? item.gallery 
+      : item.image 
+      ? [item.image] 
+      : ['https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800'];
+    setFormImages(existingImages);
+    setNewImageUrlInput('');
+
+    setFormDescription(item.description || '');
     setFormDescriptionAr(item.descriptionAr || '');
-    setFormCategory(item.category || 'Auto Parts & Hardware');
+    setFormLongDescription(item.longDescription || item.description || '');
+    setFormCategory(item.category || (type === 'product' ? 'Auto Parts & Hardware' : type === 'service' ? 'Diagnosing & Repairing' : 'Vehicles for Sale'));
     setFormBadge(item.badge || 'VERIFIED');
     setFormStock(item.stock || 10);
     setFormPartNumber(item.partNumber || `APX-${item.id}`);
-    setFormWarranty(item.warranty || '1 Year Garage Replacement');
     setFormMileage(item.mileage || '0 KM');
     setFormYear(item.year || 2024);
     setFormEngine(item.engine || 'High Output Platform');
     setFormPower(item.power || '450+ HP');
     setFormDuration(item.duration || '1 Hour');
+
+    const initialSpecs = item.specs || item.features || ['Certified GCC Spec', 'Dealer Diagnostic Telemetry'];
+    setFormSpecsList(Array.isArray(initialSpecs) ? initialSpecs : []);
+    setNewSpecInput('');
+
+    if (item.specsTable && typeof item.specsTable === 'object') {
+      const tableEntries = Object.entries(item.specsTable).map(([key, value]) => ({
+        key,
+        value: String(value)
+      }));
+      setFormSpecsTable(tableEntries);
+    } else {
+      setFormSpecsTable([
+        { key: 'Platform', value: item.engine || 'GCC Specification' },
+        { key: 'Warranty Period', value: item.warranty || '1 Year Garage' }
+      ]);
+    }
+    setNewTableKey('');
+    setNewTableValue('');
+
+    setFormCompatibility(item.compatibility || ['Universal GCC OBD2 Fitment', 'Kuwait Spec Performance Fleet']);
+    setNewCompatInput('');
+
+    setFormWarranty(item.warranty || '1 Year Garage Replacement');
+    setFormInstallDifficulty(item.installDifficulty || 'Medium (Basic Garage)');
+    setFormInTheBox(item.inTheBox || ['1x Component Hardware Assembly', '1x Installation Hardware Pack', '1x Warranty Document']);
+    setNewBoxItemInput('');
+
+    setFormReviews(item.reviews || [
+      { author: 'Verified Client', rating: 5, comment: 'Flawless fitment and performance. Inspected at Apex Garage.', date: '2025-05-01', vehicle: 'Kuwait Fleet' }
+    ]);
+    setNewReviewAuthor('');
+    setNewReviewRating(5);
+    setNewReviewComment('');
+    setNewReviewVehicle('');
+
     setIsModalOpen(true);
   };
 
-  // Duplicate an existing item
+  const handleCategorySelectionChange = (cat: StoreCategory) => {
+    setFormCategory(cat);
+    const catDef = STORE_CATEGORIES.find(c => c.id === cat);
+    if (catDef) {
+      setEditingItemType(catDef.type);
+    }
+  };
+
+  const getSpecsTableRecord = (): Record<string, string> => {
+    const rec: Record<string, string> = {};
+    formSpecsTable.forEach(entry => {
+      if (entry.key.trim() && entry.value.trim()) {
+        rec[entry.key.trim()] = entry.value.trim();
+      }
+    });
+    return rec;
+  };
+
   const handleDuplicateItem = (type: 'product' | 'service' | 'vehicle', item: any) => {
+    const images = item.images || item.gallery || [item.image];
     if (type === 'product') {
       addProduct({
         ...item,
         name: `${item.name} (Copy)`,
-        nameAr: item.nameAr ? `${item.nameAr} (نسخة)` : undefined
+        nameAr: item.nameAr ? `${item.nameAr} (نسخة)` : undefined,
+        images,
+        gallery: images
       });
     } else if (type === 'service') {
       addService({
         ...item,
         id: `srv-${Date.now()}`,
-        title: `${item.title} (Copy)`
+        title: `${item.title} (Copy)`,
+        images,
+        gallery: images
       });
     } else if (type === 'vehicle') {
       addVehicle({
         ...item,
-        name: `${item.name} (Copy)`
+        name: `${item.name} (Copy)`,
+        images,
+        gallery: images
       });
     }
   };
 
-  // Save Modal Data
   const handleSaveListing = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const imagesToSave = formImages.length > 0 
+      ? formImages 
+      : ['https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800'];
+    const primaryImage = imagesToSave[0];
+    const specsTableData = getSpecsTableRecord();
+
+    if (editingItemId !== null && originalItemType !== editingItemType) {
+      if (originalItemType === 'product') deleteProduct(Number(editingItemId));
+      if (originalItemType === 'service') deleteService(String(editingItemId));
+      if (originalItemType === 'vehicle') deleteVehicle(Number(editingItemId));
+    }
 
     if (editingItemType === 'product') {
       const productPayload: Omit<Product, 'id'> = {
         name: formTitle,
         nameAr: formTitleAr || formTitle,
-        category: formCategory as any,
+        category: formCategory,
         price: Number(formPrice),
-        priceDisplay: `${Number(formPrice)} KWD (Cash on Delivery)`,
+        priceDisplay: formPriceDisplay || `${Number(formPrice)} KWD (Cash on Delivery)`,
         rating: 5,
-        specs: ['100% Genuine Certified', 'Direct Bolt-On Fitment', formWarranty],
-        image: formImage,
-        gallery: [formImage],
+        specs: formSpecsList.length > 0 ? formSpecsList : ['100% Genuine Certified GCC Fitment', 'Direct Bolt-On Fitment', formWarranty],
+        specsTable: Object.keys(specsTableData).length > 0 ? specsTableData : undefined,
+        compatibility: formCompatibility.length > 0 ? formCompatibility : undefined,
+        inTheBox: formInTheBox.length > 0 ? formInTheBox : undefined,
+        installDifficulty: formInstallDifficulty,
+        reviews: formReviews.length > 0 ? formReviews : undefined,
+        image: primaryImage,
+        images: imagesToSave,
+        gallery: imagesToSave,
         description: formDescription,
         descriptionAr: formDescriptionAr || formDescription,
+        longDescription: formLongDescription || formDescription,
         stock: Number(formStock),
         partNumber: formPartNumber,
         warranty: formWarranty
       };
 
-      if (editingItemId !== null) {
+      if (editingItemId !== null && originalItemType === 'product') {
         updateProduct(Number(editingItemId), productPayload);
       } else {
         addProduct(productPayload);
       }
     } else if (editingItemType === 'service') {
       const servicePayload: GarageService = {
-        id: editingItemId ? String(editingItemId) : `srv-${Date.now()}`,
+        id: (editingItemId && originalItemType === 'service') ? String(editingItemId) : `srv-${Date.now()}`,
         title: formTitle,
         titleAr: formTitleAr || formTitle,
         duration: formDuration,
         price: Number(formPrice),
-        priceDisplay: `${Number(formPrice)} KWD (Cash on Arrival)`,
+        priceDisplay: formPriceDisplay || `${Number(formPrice)} KWD (Cash on Arrival)`,
         description: formDescription,
         descriptionAr: formDescriptionAr || formDescription,
+        longDescription: formLongDescription || formDescription,
         icon: 'wrench',
-        image: formImage,
-        gallery: [formImage],
-        features: ['Certified Kuwait Dyno Calibration', 'Master Tech Signed Report', 'Diagnostic Log Backup'],
-        warranty: formWarranty
+        image: primaryImage,
+        images: imagesToSave,
+        gallery: imagesToSave,
+        features: formSpecsList.length > 0 ? formSpecsList : ['Certified Kuwait Dyno Calibration', 'Master Tech Signed Report', 'Diagnostic Log Backup'],
+        specsTable: Object.keys(specsTableData).length > 0 ? specsTableData : undefined,
+        warranty: formWarranty,
+        reviews: formReviews.length > 0 ? formReviews : undefined
       };
 
-      if (editingItemId !== null) {
+      if (editingItemId !== null && originalItemType === 'service') {
         updateService(String(editingItemId), servicePayload);
       } else {
         addService(servicePayload);
@@ -383,16 +693,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ownershipHistory: '1 Kuwait Owner',
         vinStockId: `VIN-${Math.floor(100000 + Math.random() * 900000)}`,
         inspectionHistory: 'Full Garage Certification',
-        image: formImage,
-        gallery: [formImage],
+        image: primaryImage,
+        images: imagesToSave,
+        gallery: imagesToSave,
         badge: formBadge,
         location: 'Shuwaikh VIP Showroom (Cash on Arrival)',
         description: formDescription,
         warranty: formWarranty,
-        specs: ['Full Kuwait Dealer History', 'Zero Accident Record', 'Dyno Verified Output']
+        specs: formSpecsList.length > 0 ? formSpecsList : ['Full Kuwait Dealer History', 'Zero Accident Record', 'Dyno Verified Output'],
+        specsTable: Object.keys(specsTableData).length > 0 ? specsTableData : undefined,
+        reviews: formReviews.length > 0 ? formReviews : undefined
       };
 
-      if (editingItemId !== null) {
+      if (editingItemId !== null && originalItemType === 'vehicle') {
         updateVehicle(Number(editingItemId), vehiclePayload);
       } else {
         addVehicle(vehiclePayload);
@@ -402,11 +715,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsModalOpen(false);
   };
 
-  // Save Website Builder Copy & Sections
   const handleSaveWebsiteBuilder = (e: React.FormEvent) => {
     e.preventDefault();
     updateSiteSettings({
+      siteName,
+      motto,
       logoUrl,
+      faviconUrl,
+      bgType,
+      bgMediaUrl,
+      bgOverlayOpacity,
       announcementText,
       announcementTextAr,
       heroTitle,
@@ -416,7 +734,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       servicesTitle,
       partsTitle,
       showroomTitle,
-      footerAbout,
       showAnnouncement,
       showObdScanner,
       showChatbot,
@@ -426,24 +743,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setBuilderSavedToast(false), 2500);
   };
 
-  // Save Theme & Color Customizer
   const handleSaveThemeSettings = (e: React.FormEvent) => {
     e.preventDefault();
     updateSiteSettings({
       themeColor,
-      accentColor,
+      secondaryAccent,
+      accentColor: themeColor,
       headerBg,
-      headerText,
-      cardBg,
       footerBg,
+      cardBg,
+      pageBg,
       fontStyle,
-      customFontFamily
+      customFontFamily,
+      fontSizeScale,
+      cardBorderRadius,
+      cardBorderColor,
+      cardBorderWidth,
+      enableCarbonPattern,
+      enableNeonGlow
     });
     setThemeSavedToast(true);
     setTimeout(() => setThemeSavedToast(false), 2500);
   };
 
-  // Save Business Contacts
   const handleSaveBusiness = (e: React.FormEvent) => {
     e.preventDefault();
     updateSiteSettings({
@@ -455,24 +777,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setBusinessSavedToast(false), 2500);
   };
 
-  // Login Screen if not authenticated
   if (!isAdminAuthenticated) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-slate-900 text-white">
-        <div className="max-w-md w-full bg-slate-800/90 border border-slate-700/80 rounded-3xl p-8 shadow-2xl backdrop-blur-sm text-center">
+        <div className="max-w-md w-full bg-slate-800/95 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-sm text-center">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto mb-5 shadow-inner">
             <Lock className="w-8 h-8" />
           </div>
 
-          <h2 className="text-2xl font-black mb-1.5 tracking-tight">Workshop Admin Portal</h2>
+          <h2 className="text-2xl font-black mb-1.5 tracking-tight text-white">{isAr ? 'لوحة تحكم إدارة الكراج' : 'Workshop Admin Portal'}</h2>
           <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-            Authorized management suite for garage owners, live inventory editors, and customer orders.
+            {isAr ? 'منصة مخصصة لإدارة المخزون، الحجوزات المباشرة، وتخصيص الموقع بالكامل.' : 'Authorized management suite for garage owners, live inventory editors, and customer orders.'}
           </p>
 
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-left">
             <div>
               <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
-                Admin Username
+                {isAr ? 'اسم المستخدم الإداري' : 'Admin Username'}
               </label>
               <input
                 type="text"
@@ -489,7 +810,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <div>
               <label className="block text-[11px] font-bold uppercase text-slate-300 mb-1">
-                Master Password
+                {isAr ? 'كلمة المرور الرئيسية' : 'Master Password'}
               </label>
               <input
                 type="password"
@@ -507,25 +828,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {authError && (
               <div className="text-xs font-bold text-red-400 bg-red-950/40 border border-red-800/50 py-2.5 px-3 rounded-xl flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 shrink-0 text-red-400" />
-                <span>Invalid credentials. (Hint: admin / ApexTorque#2026!)</span>
+                <span>{isAr ? 'بيانات الدخول غير صحيحة.' : 'Invalid credentials. (Hint: admin / ApexTorque#2026!)'}</span>
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-sky-600/30 flex items-center justify-center gap-2"
+              className="w-full py-3.5 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-150 active:scale-95 shadow-lg flex items-center justify-center gap-2"
+              style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
             >
               <UserCheck className="w-4 h-4" />
-              <span>Sign In to Admin Hub</span>
+              <span>{isAr ? 'تسجيل الدخول إلى لوحة الإدارة' : 'Sign In to Admin Hub'}</span>
             </button>
 
             {onNavigateHome && (
               <button
                 type="button"
                 onClick={onNavigateHome}
-                className="text-xs text-slate-400 hover:text-white transition-colors block mx-auto pt-2"
+                className="text-xs text-slate-400 hover:text-white transition-colors duration-150 block mx-auto pt-2"
               >
-                ← Return to Public Storefront
+                {isAr ? '← العودة إلى المتجر العام' : '← Return to Public Storefront'}
               </button>
             )}
           </form>
@@ -534,7 +856,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
   }
 
-  // Filter listings
   const filteredProducts = config.products.filter(p => 
     p.name.toLowerCase().includes(listingSearch.toLowerCase()) || 
     (p.nameAr && p.nameAr.includes(listingSearch))
@@ -550,157 +871,224 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     (v.nameAr && v.nameAr.includes(listingSearch))
   );
 
+  const filteredUsers = registeredUsers.filter(u => {
+    const q = userSearch.toLowerCase();
+    const nameMatch = u.name?.toLowerCase().includes(q);
+    const emailMatch = u.email?.toLowerCase().includes(q);
+    const phoneMatch = u.phone?.replace(/[^0-9]/g, '').includes(q.replace(/[^0-9]/g, ''));
+    return nameMatch || emailMatch || phoneMatch;
+  });
+
+  const filteredBookings = bookings.filter(b => {
+    const q = bookingSearch.toLowerCase();
+    return (
+      (b.customerName && b.customerName.toLowerCase().includes(q)) ||
+      (b.customerPhone && b.customerPhone.includes(q)) ||
+      (b.serviceTitle && b.serviceTitle.toLowerCase().includes(q)) ||
+      (b.vehicleInfo && b.vehicleInfo.toLowerCase().includes(q)) ||
+      b.id.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredTestDrives = testDrives.filter(t => {
+    const q = testDriveSearch.toLowerCase();
+    return (
+      (t.customerName && t.customerName.toLowerCase().includes(q)) ||
+      (t.customerPhone && t.customerPhone.includes(q)) ||
+      (t.vehicleName && t.vehicleName.toLowerCase().includes(q)) ||
+      t.id.toLowerCase().includes(q)
+    );
+  });
+
   return (
-    <div className="min-h-screen bg-slate-100/80 pb-24 pt-8 text-slate-900">
+    <div className="min-h-screen pb-24 pt-8 text-slate-100" style={{ backgroundColor: 'var(--page-bg, #0f172a)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         
         {/* Top Header Control Strip */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-md mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
           <div>
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-600 mb-1">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider mb-1" style={{ color: 'var(--primary-accent, #0284c7)' }}>
               <Settings className="w-4 h-4" />
-              <span>Full-Stack Workshop & Website Builder</span>
+              <span>{isAr ? 'نظام إدارة الورشة والتخصيص المباشر' : 'Full-Stack Workshop & Website Builder'}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              ApexTorque Modular Control Suite
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {siteName} {isAr ? '— لوحة التحكم' : 'Control Suite'}
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Full Shopify-style live site customizer, visual listings catalog, customer CRM, and orders pipeline.
+            <p className="text-xs text-slate-400 mt-1">
+              {isAr ? 'محرر القوائم خماسي التبويب، ضبط أحجام الخطوط، مزامنة الحجوزات وطلبات تجربة القيادة.' : 'Live visual customizer, font scaler, border engine, 5-tab listing manager, and CRM.'}
             </p>
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
             <button
               onClick={() => {
-                if (window.confirm('Reset all site customizations and catalog to factory default?')) {
+                if (window.confirm(isAr ? 'هل تريد استعادة جميع الإعدادات الافتراضية؟' : 'Reset all site customizations and catalog to factory default?')) {
                   resetToDefaults();
                 }
               }}
-              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all duration-150 active:scale-95 border border-slate-700"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Defaults</span>
+              <span>{isAr ? 'إعادة ضبط' : 'Reset Defaults'}</span>
             </button>
 
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors shadow-md shadow-sky-600/20"
+                className="px-4 py-2.5 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all duration-150 active:scale-95 shadow-md"
+                style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>View Live Site</span>
+                <span>{isAr ? 'معاينة الموقع' : 'View Live Site'}</span>
               </button>
             )}
 
             <button
               onClick={handleAdminLogout}
-              className="px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors border border-red-200"
+              className="px-3.5 py-2.5 bg-red-950/60 hover:bg-red-900/80 text-red-300 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all duration-150 active:scale-95 border border-red-800/60"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Logout</span>
+              <span>{isAr ? 'خروج' : 'Logout'}</span>
             </button>
           </div>
         </div>
 
         {/* Primary Tab Navigation */}
-        <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/80 rounded-2xl mb-8 overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-800/80 border border-slate-700 rounded-2xl mb-8 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('listings')}
-            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 ${
-              activeTab === 'listings' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 ${
+              activeTab === 'listings' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
             }`}
+            style={{ color: activeTab === 'listings' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Layers className="w-4 h-4" />
-            <span>1. Catalog & Listings</span>
+            <span>1. {isAr ? 'الكتالوج والمخزون' : 'Catalog & Listings'}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('orders')}
-            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 relative ${
-              activeTab === 'orders' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 relative ${
+              activeTab === 'orders' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
             }`}
+            style={{ color: activeTab === 'orders' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <ShoppingCart className="w-4 h-4" />
-            <span>2. Customer Orders ({orders.length})</span>
+            <span>2. {isAr ? 'الطلبات' : 'Orders'} ({orders.length})</span>
             {orders.length > 0 && (
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             )}
           </button>
 
           <button
-            onClick={() => setActiveTab('crm')}
-            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 ${
-              activeTab === 'crm' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            onClick={() => setActiveTab('bookings')}
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 relative ${
+              activeTab === 'bookings' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
             }`}
+            style={{ color: activeTab === 'bookings' ? 'var(--primary-accent, #0284c7)' : undefined }}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>3. {isAr ? 'حجوزات الكراج' : 'Garage Bookings'} ({bookings.length})</span>
+            {bookings.length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('testDrives')}
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 relative ${
+              activeTab === 'testDrives' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
+            }`}
+            style={{ color: activeTab === 'testDrives' ? 'var(--primary-accent, #0284c7)' : undefined }}
+          >
+            <Car className="w-4 h-4" />
+            <span>4. {isAr ? 'تجربة القيادة' : 'Test Drives'} ({testDrives.length})</span>
+            {testDrives.length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('crm')}
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 ${
+              activeTab === 'crm' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
+            }`}
+            style={{ color: activeTab === 'crm' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Users className="w-4 h-4" />
-            <span>3. Customer CRM & Bookings</span>
+            <span>5. {isAr ? 'دليل العملاء' : 'CRM'} ({registeredUsers.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('builder')}
-            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 ${
-              activeTab === 'builder' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 ${
+              activeTab === 'builder' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
             }`}
+            style={{ color: activeTab === 'builder' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Sliders className="w-4 h-4" />
-            <span>4. Website Builder (Shopify-Style)</span>
+            <span>6. {isAr ? 'محرر الواجهة' : 'Website Builder'}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('theme')}
-            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 ${
-              activeTab === 'theme' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 ${
+              activeTab === 'theme' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
             }`}
+            style={{ color: activeTab === 'theme' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Palette className="w-4 h-4" />
-            <span>5. Theme Colors & Fonts</span>
+            <span>7. {isAr ? 'الألوان والتخصيص' : 'Theme & Styles'}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('business')}
-            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 ${
-              activeTab === 'business' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 flex items-center gap-2 ${
+              activeTab === 'business' ? 'bg-slate-900 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white'
             }`}
+            style={{ color: activeTab === 'business' ? 'var(--primary-accent, #0284c7)' : undefined }}
           >
             <Phone className="w-4 h-4" />
-            <span>6. Business & Contacts</span>
+            <span>8. {isAr ? 'معلومات الورشة' : 'Business'}</span>
           </button>
         </div>
 
-        {/* TAB 1: LISTINGS (Products, Services, Vehicles) */}
+        {/* TAB 1: LISTINGS */}
         {activeTab === 'listings' && (
           <div className="space-y-6">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-4 rounded-2xl border border-slate-700/70 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
               <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
                 <button
                   onClick={() => setListingCategory('products')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
-                    listingCategory === 'products' ? 'bg-sky-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 flex items-center gap-2 shrink-0 ${
+                    listingCategory === 'products' ? 'text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                   }`}
+                  style={{ backgroundColor: listingCategory === 'products' ? 'var(--primary-accent, #0284c7)' : undefined }}
                 >
                   <Package className="w-3.5 h-3.5" />
-                  <span>Parts & Upgrades ({config.products.length})</span>
+                  <span>{isAr ? 'القطع والترقيات' : 'Parts & Upgrades'} ({config.products.length})</span>
                 </button>
 
                 <button
                   onClick={() => setListingCategory('services')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
-                    listingCategory === 'services' ? 'bg-sky-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 flex items-center gap-2 shrink-0 ${
+                    listingCategory === 'services' ? 'text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                   }`}
+                  style={{ backgroundColor: listingCategory === 'services' ? 'var(--primary-accent, #0284c7)' : undefined }}
                 >
                   <Wrench className="w-3.5 h-3.5" />
-                  <span>Garage Services ({config.services.length})</span>
+                  <span>{isAr ? 'خدمات المنصات' : 'Garage Services'} ({config.services.length})</span>
                 </button>
 
                 <button
                   onClick={() => setListingCategory('vehicles')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
-                    listingCategory === 'vehicles' ? 'bg-sky-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 flex items-center gap-2 shrink-0 ${
+                    listingCategory === 'vehicles' ? 'text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                   }`}
+                  style={{ backgroundColor: listingCategory === 'vehicles' ? 'var(--primary-accent, #0284c7)' : undefined }}
                 >
                   <Car className="w-3.5 h-3.5" />
-                  <span>Showroom Cars ({config.vehicles.length})</span>
+                  <span>{isAr ? 'سيارات المعرض' : 'Showroom Cars'} ({config.vehicles.length})</span>
                 </button>
               </div>
 
@@ -711,17 +1099,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={listingSearch}
                     onChange={(e) => setListingSearch(e.target.value)}
-                    placeholder="Search catalog items..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs font-medium focus:outline-none focus:border-sky-500"
+                    placeholder={isAr ? 'بحث في الكتالوج...' : 'Search catalog items...'}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-sky-500"
                   />
                 </div>
 
                 <button
                   onClick={() => handleOpenAdd(listingCategory === 'products' ? 'product' : listingCategory === 'services' ? 'service' : 'vehicle')}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/20 shrink-0"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-150 active:scale-95 flex items-center gap-1.5 shadow-md shadow-emerald-600/20 shrink-0"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Add New</span>
+                  <span>{isAr ? 'إضافة جديد' : 'Add New'}</span>
                 </button>
               </div>
             </div>
@@ -729,244 +1117,274 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Product Cards Grid */}
             {listingCategory === 'products' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((p) => (
-                  <div key={p.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between group">
-                    <div>
-                      <div className="h-44 relative bg-slate-100 overflow-hidden">
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <span className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
-                          {p.category}
-                        </span>
-                        <span className="absolute bottom-3 right-3 bg-emerald-600 text-white px-2 py-0.5 rounded-md text-[10px] font-black">
-                          {p.price} KWD • Cash on Delivery
-                        </span>
-                      </div>
-                      <div className="p-5">
-                        <div className="text-[10px] font-mono font-bold text-sky-600 mb-0.5">{p.partNumber}</div>
-                        <h3 className="font-bold text-sm text-slate-900 line-clamp-1 mb-1">{p.name}</h3>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">{p.description}</p>
-                        <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                          <span>Stock: {p.stock} Units</span>
-                          <span>⭐ {p.rating} / 5</span>
+                {filteredProducts.map((p) => {
+                  const galleryCount = (p.images?.length || p.gallery?.length || 1);
+                  return (
+                    <div 
+                      key={p.id} 
+                      className="rounded-3xl border border-slate-700/60 overflow-hidden shadow-lg flex flex-col justify-between group transition-all duration-200" 
+                      style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}
+                    >
+                      <div>
+                        <div className="aspect-square relative overflow-hidden bg-slate-950">
+                          <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <span className="absolute top-3 left-3 bg-slate-900/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
+                            {p.category}
+                          </span>
+                          <span className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm text-amber-300 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                            📸 {galleryCount} {galleryCount === 1 ? (isAr ? 'صورة' : 'Photo') : (isAr ? 'صور' : 'Photos')}
+                          </span>
+                          <span className="absolute bottom-3 right-3 bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-black shadow-md">
+                            {p.price} KWD • {isAr ? 'الدفع نقداً عند الاستلام' : 'Cash on Delivery'}
+                          </span>
+                        </div>
+                        <div className="p-5">
+                          <div className="text-[11px] font-mono font-bold text-sky-400 mb-0.5" style={{ color: 'var(--primary-accent, #0284c7)' }}>{p.partNumber}</div>
+                          <h3 className="font-bold text-sm text-white line-clamp-1 mb-1">{isAr && p.nameAr ? p.nameAr : p.name}</h3>
+                          <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-3">{isAr && p.descriptionAr ? p.descriptionAr : p.description}</p>
+                          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                            <span>{isAr ? 'المخزون:' : 'Stock:'} {p.stock}</span>
+                            <span>⭐ {p.rating} / 5</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="p-4 pt-0 border-t border-slate-700/60 flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => handleOpenEdit('product', p)}
+                          className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-all duration-150 active:scale-95 border border-slate-700"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-sky-400" />
+                          <span>{isAr ? 'تعديل' : 'Edit'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDuplicateItem('product', p)}
+                          title="Duplicate"
+                          className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all duration-150 active:scale-95 border border-slate-700"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(isAr ? `حذف المنتج "${p.name}"؟` : `Delete product "${p.name}"?`)) {
+                              deleteProduct(p.id);
+                            }
+                          }}
+                          className="px-3 py-2 bg-red-950/60 hover:bg-red-900 text-red-300 font-bold text-xs rounded-xl transition-all duration-150 active:scale-95 border border-red-800/60"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="p-4 pt-0 border-t border-slate-100 flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => handleOpenEdit('product', p)}
-                        className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-colors"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-sky-600" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDuplicateItem('product', p)}
-                        title="Duplicate Product"
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Delete product "${p.name}"?`)) {
-                            deleteProduct(p.id);
-                          }
-                        }}
-                        className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
             {/* Service Cards Grid */}
             {listingCategory === 'services' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredServices.map((s) => (
-                  <div key={s.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between group">
-                    <div>
-                      <div className="h-44 relative bg-slate-100 overflow-hidden">
-                        <img src={s.image} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <span className="absolute top-3 left-3 bg-sky-900/80 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
-                          ⏱️ {s.duration}
-                        </span>
-                        <span className="absolute bottom-3 right-3 bg-sky-600 text-white px-2 py-0.5 rounded-md text-[10px] font-black">
-                          {s.price} KWD • Cash on Arrival
-                        </span>
+                {filteredServices.map((s) => {
+                  const galleryCount = (s.images?.length || s.gallery?.length || 1);
+                  return (
+                    <div 
+                      key={s.id} 
+                      className="rounded-3xl border border-slate-700/60 overflow-hidden shadow-lg flex flex-col justify-between group transition-all duration-200" 
+                      style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}
+                    >
+                      <div>
+                        <div className="aspect-square relative overflow-hidden bg-slate-950">
+                          <img src={s.image} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <span className="absolute top-3 left-3 bg-slate-900/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
+                            ⏱️ {s.duration}
+                          </span>
+                          <span className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm text-amber-300 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                            📸 {galleryCount} {isAr ? 'صور' : 'Photos'}
+                          </span>
+                          <span className="absolute bottom-3 right-3 bg-sky-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-black shadow-md" style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}>
+                            {s.price} KWD • {isAr ? 'الدفع عند الحضور' : 'Cash on Arrival'}
+                          </span>
+                        </div>
+                        <div className="p-5">
+                          <h3 className="font-bold text-sm text-white line-clamp-1 mb-1">{isAr && s.titleAr ? s.titleAr : s.title}</h3>
+                          <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-3">{isAr && s.descriptionAr ? s.descriptionAr : s.description}</p>
+                        </div>
                       </div>
-                      <div className="p-5">
-                        <h3 className="font-bold text-sm text-slate-900 line-clamp-1 mb-1">{s.title}</h3>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">{s.description}</p>
+                      <div className="p-4 pt-0 border-t border-slate-700/60 flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => handleOpenEdit('service', s)}
+                          className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-all duration-150 active:scale-95 border border-slate-700"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-sky-400" />
+                          <span>{isAr ? 'تعديل' : 'Edit'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDuplicateItem('service', s)}
+                          title="Duplicate"
+                          className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all duration-150 active:scale-95 border border-slate-700"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(isAr ? `حذف الخدمة "${s.title}"؟` : `Delete service "${s.title}"?`)) {
+                              deleteService(s.id);
+                            }
+                          }}
+                          className="px-3 py-2 bg-red-950/60 hover:bg-red-900 text-red-300 font-bold text-xs rounded-xl transition-all duration-150 active:scale-95 border border-red-800/60"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="p-4 pt-0 border-t border-slate-100 flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => handleOpenEdit('service', s)}
-                        className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-colors"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-sky-600" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDuplicateItem('service', s)}
-                        title="Duplicate Service"
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Delete service "${s.title}"?`)) {
-                            deleteService(s.id);
-                          }
-                        }}
-                        className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
             {/* Vehicle Cards Grid */}
             {listingCategory === 'vehicles' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredVehicles.map((v) => (
-                  <div key={v.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between group">
-                    <div>
-                      <div className="h-44 relative bg-slate-100 overflow-hidden">
-                        <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <span className="absolute top-3 left-3 bg-amber-500 text-slate-900 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase">
-                          {v.badge}
-                        </span>
-                        <span className="absolute bottom-3 right-3 bg-slate-900 text-white px-2 py-0.5 rounded-md text-[10px] font-black">
-                          {v.price.toLocaleString()} KWD
-                        </span>
+                {filteredVehicles.map((v) => {
+                  const galleryCount = (v.images?.length || v.gallery?.length || 1);
+                  return (
+                    <div 
+                      key={v.id} 
+                      className="rounded-3xl border border-slate-700/60 overflow-hidden shadow-lg flex flex-col justify-between group transition-all duration-200" 
+                      style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}
+                    >
+                      <div>
+                        <div className="aspect-square relative overflow-hidden bg-slate-950">
+                          <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <span className="absolute top-3 left-3 bg-amber-500 text-slate-950 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase" style={{ backgroundColor: 'var(--secondary-accent, #f59e0b)' }}>
+                            {v.badge}
+                          </span>
+                          <span className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm text-amber-300 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                            📸 {galleryCount} {isAr ? 'صور' : 'Photos'}
+                          </span>
+                          <span className="absolute bottom-3 right-3 bg-slate-900/90 text-white px-2.5 py-1 rounded-lg text-[11px] font-black shadow-md">
+                            {v.price.toLocaleString()} KWD
+                          </span>
+                        </div>
+                        <div className="p-5">
+                          <div className="text-[11px] font-bold text-sky-400 mb-0.5" style={{ color: 'var(--primary-accent, #0284c7)' }}>{v.year} • {v.mileage} • {v.power}</div>
+                          <h3 className="font-bold text-sm text-white line-clamp-1 mb-1">{isAr && v.nameAr ? v.nameAr : v.name}</h3>
+                          <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-3">{v.description}</p>
+                        </div>
                       </div>
-                      <div className="p-5">
-                        <div className="text-[11px] font-bold text-sky-600 mb-0.5">{v.year} • {v.mileage} • {v.power}</div>
-                        <h3 className="font-bold text-sm text-slate-900 line-clamp-1 mb-1">{v.name}</h3>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">{v.description}</p>
+                      <div className="p-4 pt-0 border-t border-slate-700/60 flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => handleOpenEdit('vehicle', v)}
+                          className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-all duration-150 active:scale-95 border border-slate-700"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-sky-400" />
+                          <span>{isAr ? 'تعديل' : 'Edit'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDuplicateItem('vehicle', v)}
+                          title="Duplicate"
+                          className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all duration-150 active:scale-95 border border-slate-700"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(isAr ? `حذف المركبة "${v.name}"؟` : `Delete vehicle "${v.name}"?`)) {
+                              deleteVehicle(v.id);
+                            }
+                          }}
+                          className="px-3 py-2 bg-red-950/60 hover:bg-red-900 text-red-300 font-bold text-xs rounded-xl transition-all duration-150 active:scale-95 border border-red-800/60"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="p-4 pt-0 border-t border-slate-100 flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => handleOpenEdit('vehicle', v)}
-                        className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-colors"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-sky-600" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDuplicateItem('vehicle', v)}
-                        title="Duplicate Car"
-                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Delete vehicle "${v.name}"?`)) {
-                            deleteVehicle(v.id);
-                          }
-                        }}
-                        className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 2: CUSTOMER ORDERS & PHONE DIRECTORY */}
+        {/* TAB 2: ORDERS */}
         {activeTab === 'orders' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+            <div className="rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-lg" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-sky-600" />
-                    <span>Customer Placed Orders & Phone Contacts</span>
+                  <h2 className="text-xl font-black text-white flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                    <span>{isAr ? 'طلبات العملاء وأرقام الاتصال' : 'Customer Placed Orders & Phone Contacts'}</span>
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Live feed of orders placed by customers across Kuwait. Contact clients directly via WhatsApp or phone.
+                  <p className="text-xs text-slate-400 mt-1">
+                    {isAr ? 'جدول الطلبات المباشرة في الكويت مع إمكانية التواصل الفوري عبر الواتساب.' : 'Live feed of orders placed by customers across Kuwait. Contact clients directly via WhatsApp or phone.'}
                   </p>
                 </div>
-                <div className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-3.5 py-1.5 rounded-xl">
-                  Total Orders: {orders.length}
+                <div className="text-xs font-mono font-bold text-slate-300 bg-slate-900 border border-slate-700 px-3.5 py-1.5 rounded-xl">
+                  {isAr ? 'الإجمالي:' : 'Total Orders:'} {orders.length}
                 </div>
               </div>
 
               {orders.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl">
-                  <Package className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                  <div className="text-sm font-bold text-slate-700">No Orders Placed Yet</div>
-                  <p className="text-xs text-slate-400 mt-1">Orders placed from the shopping cart drawer will show up here in real time.</p>
+                <div className="text-center py-12 border-2 border-dashed border-slate-700 rounded-2xl">
+                  <Package className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+                  <div className="text-sm font-bold text-slate-300">{isAr ? 'لا توجد طلبات مسجلة بعد' : 'No Orders Placed Yet'}</div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {orders.map((ord) => (
-                    <div key={ord.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 hover:border-slate-300 transition-all">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                    <div key={ord.id} className="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-5 hover:border-slate-500 transition-all">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                         <div>
                           <div className="flex items-center gap-2.5">
-                            <span className="font-mono font-bold text-sky-700 text-sm">{ord.id}</span>
+                            <span className="font-mono font-bold text-sky-400 text-sm" style={{ color: 'var(--primary-accent, #0284c7)' }}>{ord.id}</span>
                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                              ord.status === 'Delivered' ? 'bg-emerald-100 text-emerald-800' :
-                              ord.status === 'Dispatched' ? 'bg-sky-100 text-sky-800' :
-                              ord.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                              'bg-amber-100 text-amber-800'
+                              ord.status === 'Delivered' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
+                              ord.status === 'Dispatched' ? 'bg-sky-950 text-sky-300 border border-sky-800' :
+                              ord.status === 'Cancelled' ? 'bg-red-950 text-red-300 border border-red-800' :
+                              'bg-amber-950 text-amber-300 border border-amber-800'
                             }`}>
                               {ord.status}
                             </span>
                             <span className="text-xs text-slate-400 font-mono">📅 {ord.date}</span>
                           </div>
                           
-                          {/* Customer Contact Details */}
-                          <div className="mt-2.5 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-800">
-                            <div className="flex items-center gap-1.5 text-slate-900 font-bold">
-                              <Users className="w-3.5 h-3.5 text-slate-500" />
-                              <span>{ord.customerName || 'Store Client'}</span>
+                          <div className="mt-2.5 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-200">
+                            <div className="flex items-center gap-1.5 text-white font-bold">
+                              <Users className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{ord.customerName || (isAr ? 'عميل كراج' : 'Store Client')}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-sky-700 font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200">
-                              <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>{ord.customerPhone || '+965 9900 1234'}</span>
-                            </div>
+                            {ord.customerPhone && (
+                              <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                                <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>{ord.customerPhone}</span>
+                              </div>
+                            )}
                             {ord.customerEmail && (
-                              <div className="text-slate-500 text-[11px]">
-                                ✉️ {ord.customerEmail}
+                              <div className="text-slate-400 text-[11px] flex items-center gap-1">
+                                <Mail className="w-3 h-3 text-slate-500" />
+                                <span>{ord.customerEmail}</span>
                               </div>
                             )}
                             {ord.shippingAddress && (
-                              <div className="text-slate-600 text-[11px] flex items-center gap-1">
-                                <MapPin className="w-3 h-3 text-red-500" />
+                              <div className="text-slate-300 text-[11px] flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-red-400" />
                                 <span>{ord.shippingAddress}</span>
                               </div>
                             )}
                           </div>
                         </div>
 
-                        {/* Status Updater & Actions */}
                         <div className="flex items-center gap-2 self-start md:self-center">
                           <select
                             value={ord.status}
                             onChange={(e) => onUpdateOrder && onUpdateOrder(ord.id, { status: e.target.value as any })}
-                            className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500"
+                            className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-sky-500"
                           >
-                            <option value="Processing">Status: Processing</option>
-                            <option value="Dispatched">Status: Dispatched</option>
-                            <option value="Ready for Workshop Pickup">Status: Workshop Pickup</option>
-                            <option value="Delivered">Status: Delivered</option>
-                            <option value="Cancelled">Status: Cancelled</option>
+                            <option value="Processing">{isAr ? 'قيد التجهيز' : 'Status: Processing'}</option>
+                            <option value="Dispatched">{isAr ? 'تم الشحن' : 'Status: Dispatched'}</option>
+                            <option value="Ready for Workshop Pickup">{isAr ? 'جاهز للاستلام من الورشة' : 'Status: Workshop Pickup'}</option>
+                            <option value="Delivered">{isAr ? 'تم التوصيل' : 'Status: Delivered'}</option>
+                            <option value="Cancelled">{isAr ? 'ملغي' : 'Status: Cancelled'}</option>
                           </select>
 
                           {ord.customerPhone && (
@@ -974,8 +1392,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               href={`https://wa.me/${ord.customerPhone.replace(/[^0-9]/g, '')}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl border border-emerald-200 transition-colors"
-                              title="Chat with Customer on WhatsApp"
+                              className="p-2 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 rounded-xl border border-emerald-800 transition-all duration-150 active:scale-95"
+                              title="Chat on WhatsApp"
                             >
                               <MessageCircle className="w-4 h-4" />
                             </a>
@@ -984,11 +1402,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {onDeleteOrder && (
                             <button
                               onClick={() => {
-                                if (window.confirm(`Delete order ${ord.id}?`)) {
+                                if (window.confirm(isAr ? `حذف الطلب ${ord.id}؟` : `Delete order ${ord.id}?`)) {
                                   onDeleteOrder(ord.id);
                                 }
                               }}
-                              className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors"
+                              className="p-2 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-xl transition-all duration-150 active:scale-95 border border-red-800"
                               title="Delete Order"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -997,20 +1415,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
 
-                      {/* Order Items Breakdown */}
                       <div className="pt-3">
-                        <div className="text-[11px] font-bold uppercase text-slate-400 mb-2">Order Line Items:</div>
+                        <div className="text-[11px] font-bold uppercase text-slate-400 mb-2">{isAr ? 'القطع المطلوبة:' : 'Order Line Items:'}</div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                           {ord.items.map((item, idx) => (
-                            <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200/80 text-xs flex items-center justify-between">
-                              <span className="font-semibold text-slate-800 truncate mr-2">{item.productName}</span>
-                              <span className="font-mono text-sky-600 font-bold shrink-0">x{item.quantity} ({item.price * item.quantity} KWD)</span>
+                            <div key={idx} className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-xs flex items-center justify-between text-slate-200">
+                              <span className="font-semibold truncate mr-2">{item.productName}</span>
+                              <span className="font-mono text-sky-400 font-bold shrink-0">x{item.quantity} ({item.price * item.quantity} KWD)</span>
                             </div>
                           ))}
                         </div>
-                        <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-900 border-t border-slate-200 pt-2">
-                          <span>Payment Method: <span className="font-mono text-slate-600">{ord.paymentMethod}</span></span>
-                          <span className="text-sm font-black text-sky-700">Total: {ord.totalAmount} KWD</span>
+                        <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-300 border-t border-slate-800 pt-2">
+                          <span>{isAr ? 'طريقة الدفع:' : 'Payment Method:'} <span className="font-mono text-slate-400">{ord.paymentMethod}</span></span>
+                          <span className="text-sm font-black text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }}>{isAr ? 'المجموع:' : 'Total:'} {ord.totalAmount} KWD</span>
                         </div>
                       </div>
                     </div>
@@ -1021,137 +1438,350 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* TAB 3: CUSTOMER CRM, BOOKINGS & TEST DRIVES */}
+        {/* TAB 3: BOOKINGS */}
+        {activeTab === 'bookings' && (
+          <div className="space-y-6">
+            <div className="rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-lg" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-black text-white flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                    <span>{isAr ? 'حجوزات منصات الفحص والداينو' : 'Customer Bay Reservations & Diagnostic Appointments'}</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {isAr ? 'مواعيد برمجة السيارات وصيانة المحركات المحجوزة مباشرة في فرع الشويخ.' : 'Direct bookings placed by vehicle owners for dyno tuning, computerized diagnostics, and repair bays.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={bookingSearch}
+                      onChange={(e) => setBookingSearch(e.target.value)}
+                      placeholder={isAr ? 'بحث في الحجوزات...' : 'Search bookings...'}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="text-xs font-mono font-bold text-slate-300 bg-slate-900 border border-slate-700 px-3.5 py-2 rounded-xl whitespace-nowrap">
+                    {isAr ? 'الإجمالي:' : 'Total:'} {bookings.length}
+                  </div>
+                </div>
+              </div>
+
+              {filteredBookings.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed border-slate-700 rounded-2xl">
+                  <Calendar className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+                  <div className="text-sm font-bold text-slate-300">{isAr ? 'لا توجد حجوزات صيانة نشطة' : 'No Bay Bookings Found'}</div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredBookings.map((bk) => (
+                    <div key={bk.id} className="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-5 hover:border-slate-500 transition-all">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                        <div>
+                          <div className="flex items-center gap-2.5">
+                            <span className="font-mono font-bold text-sky-400 text-sm" style={{ color: 'var(--primary-accent, #0284c7)' }}>{bk.id}</span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                              bk.status === 'Completed' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
+                              bk.status === 'Ready for Pickup' ? 'bg-teal-950 text-teal-300 border border-teal-800' :
+                              bk.status === 'In Service Bay' ? 'bg-purple-950 text-purple-300 border border-purple-800 animate-pulse' :
+                              bk.status === 'Car Received' ? 'bg-amber-950 text-amber-300 border border-amber-800' :
+                              'bg-sky-950 text-sky-300 border border-sky-800'
+                            }`}>
+                              {bk.status}
+                            </span>
+                            <span className="text-xs text-slate-400 font-mono">📅 {bk.date} • ⏱️ {bk.timeSlot}</span>
+                          </div>
+
+                          <h3 className="text-base font-bold text-white mt-2">{bk.serviceTitle}</h3>
+                          
+                          <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-200">
+                            <div className="flex items-center gap-1.5 text-white font-bold">
+                              <Users className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{bk.customerName || (isAr ? 'عميل كراج' : 'Garage Client')}</span>
+                            </div>
+                            {bk.customerPhone && (
+                              <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                                <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>{bk.customerPhone}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5 text-slate-300 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                              <Car className="w-3.5 h-3.5 text-sky-400" />
+                              <span>{bk.vehicleInfo}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start lg:self-center">
+                          <select
+                            value={bk.status}
+                            onChange={(e) => onUpdateBooking && onUpdateBooking(bk.id, { status: e.target.value as any })}
+                            className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-sky-500"
+                          >
+                            <option value="Confirmed">{isAr ? 'مؤكد' : 'Status: Confirmed'}</option>
+                            <option value="Car Received">{isAr ? 'تم استلام السيارة' : 'Status: Car Received'}</option>
+                            <option value="In Service Bay">{isAr ? 'في منصة الصيانة' : 'Status: In Service Bay'}</option>
+                            <option value="Ready for Pickup">{isAr ? 'جاهزة للاستلام' : 'Status: Ready for Pickup'}</option>
+                            <option value="Completed">{isAr ? 'مكتمل' : 'Status: Completed'}</option>
+                          </select>
+
+                          {bk.customerPhone && (
+                            <a
+                              href={`https://wa.me/${bk.customerPhone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 rounded-xl border border-emerald-800 transition-all duration-150 active:scale-95"
+                              title="Chat on WhatsApp"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </a>
+                          )}
+
+                          {onDeleteBooking && (
+                            <button
+                              onClick={() => {
+                                if (window.confirm(isAr ? `حذف الحجز ${bk.id}؟` : `Delete booking ${bk.id}?`)) {
+                                  onDeleteBooking(bk.id);
+                                }
+                              }}
+                              className="p-2 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-xl transition-all duration-150 active:scale-95 border border-red-800"
+                              title="Delete Booking"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold text-slate-300 gap-2">
+                        <div>
+                          <span>{isAr ? 'حالة السداد:' : 'Payment Status:'} </span>
+                          <span className="text-emerald-400 font-semibold">{bk.paymentStatus} ({isAr ? 'الدفع نقداً عند الحضور في كراج الشويخ' : 'Cash on Arrival at Shuwaikh'})</span>
+                        </div>
+                        <div className="text-sm font-black text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }}>
+                          {isAr ? 'تقدير الفاتورة:' : 'Job Estimate:'} {bk.totalAmount} KWD
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: TEST DRIVES */}
+        {activeTab === 'testDrives' && (
+          <div className="space-y-6">
+            <div className="rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-lg" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-black text-white flex items-center gap-2">
+                    <Car className="w-5 h-5 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                    <span>{isAr ? 'طلبات تجربة القيادة VIP في المعرض' : 'Showroom VIP Test Drive Reservations'}</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {isAr ? 'جدول العملاء الحاجزين لتجربة القيادة للسيارات الرياضية الفاخرة.' : 'Live schedule of customers requesting VIP test drives for certified showroom supercars and performance vehicles.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={testDriveSearch}
+                      onChange={(e) => setTestDriveSearch(e.target.value)}
+                      placeholder={isAr ? 'بحث في الطلبات...' : 'Search test drives...'}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="text-xs font-mono font-bold text-slate-300 bg-slate-900 border border-slate-700 px-3.5 py-2 rounded-xl whitespace-nowrap">
+                    {isAr ? 'الإجمالي:' : 'Total:'} {testDrives.length}
+                  </div>
+                </div>
+              </div>
+
+              {filteredTestDrives.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed border-slate-700 rounded-2xl">
+                  <Car className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+                  <div className="text-sm font-bold text-slate-300">{isAr ? 'لا توجد طلبات تجربة قيادة حالياً' : 'No VIP Test Drive Requests'}</div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredTestDrives.map((td) => (
+                    <div key={td.id} className="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-5 hover:border-slate-500 transition-all">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2.5">
+                            <span className="font-mono font-bold text-sky-400 text-sm" style={{ color: 'var(--primary-accent, #0284c7)' }}>{td.id}</span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                              td.status === 'Completed' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
+                              td.status === 'Cancelled' ? 'bg-red-950 text-red-300 border border-red-800' :
+                              'bg-amber-950 text-amber-300 border border-amber-800'
+                            }`}>
+                              {td.status}
+                            </span>
+                            <span className="text-xs text-slate-400 font-mono">📅 {td.date}</span>
+                          </div>
+
+                          <h3 className="text-base font-black text-white mt-2">{td.vehicleName}</h3>
+                          
+                          <div className="mt-2.5 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-200">
+                            <div className="flex items-center gap-1.5 text-white font-bold">
+                              <Users className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{td.customerName || 'VIP Client'}</span>
+                            </div>
+                            {td.customerPhone && (
+                              <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                                <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>{td.customerPhone}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1 text-slate-400 text-[11px]">
+                              <MapPin className="w-3.5 h-3.5 text-red-400" />
+                              <span>{td.location}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start lg:self-center">
+                          <select
+                            value={td.status}
+                            onChange={(e) => onUpdateTestDrive && onUpdateTestDrive(td.id, { status: e.target.value as any })}
+                            className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-sky-500"
+                          >
+                            <option value="Confirmed VIP Slot">{isAr ? 'موعد VIP مؤكد' : 'Confirmed VIP Slot'}</option>
+                            <option value="Pending Confirmation">{isAr ? 'بانتظار التأكيد' : 'Pending Confirmation'}</option>
+                            <option value="Completed">{isAr ? 'تمت التجربة' : 'Completed'}</option>
+                            <option value="Cancelled">{isAr ? 'ملغي' : 'Cancelled'}</option>
+                          </select>
+
+                          {td.customerPhone && (
+                            <a
+                              href={`https://wa.me/${td.customerPhone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 rounded-xl border border-emerald-800 transition-all duration-150 active:scale-95"
+                              title="WhatsApp"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </a>
+                          )}
+
+                          {onDeleteTestDrive && (
+                            <button
+                              onClick={() => {
+                                if (window.confirm(isAr ? `حذف طلب تجربة القيادة ${td.id}؟` : `Delete test drive request ${td.id}?`)) {
+                                  onDeleteTestDrive(td.id);
+                                }
+                              }}
+                              className="p-2 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-xl transition-all duration-150 active:scale-95 border border-red-800"
+                              title="Delete Request"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: CRM */}
         {activeTab === 'crm' && (
           <div className="space-y-8">
-            
-            {/* Garage Bay Bookings */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between mb-5">
+            <div className="rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-lg" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-sky-600" />
-                    <span>Workshop Bay Service Appointments ({bookings.length})</span>
+                  <h3 className="text-xl font-black text-white flex items-center gap-2">
+                    <Users className="w-5 h-5 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                    <span>{isAr ? 'دليل حسابات العملاء المسجلين' : 'Registered Customer Accounts Directory'} ({registeredUsers.length})</span>
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Live service bookings made by garage customers.</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {isAr ? 'قاعدة بيانات عملاء الورشة وسجلات سياراتهم المحفوظة.' : 'Live database of all verified garage clients, contact records, and fleet profiles.'}
+                  </p>
+                </div>
+
+                <div className="relative w-full sm:w-72">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder={isAr ? 'بحث بالاسم، الهاتف، الإيميل...' : 'Search name, phone, email...'}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-sky-500"
+                  />
                 </div>
               </div>
 
-              {bookings.length === 0 ? (
-                <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl text-xs text-slate-400 font-semibold">
-                  No workshop bay appointments scheduled yet.
+              {filteredUsers.length === 0 ? (
+                <div className="p-8 text-center border-2 border-dashed border-slate-700 rounded-2xl text-xs text-slate-400 font-semibold">
+                  {userSearch ? (isAr ? 'لا توجد نتائج مطابقة لبحثك' : 'No customer accounts match your search filter.') : (isAr ? 'لا يوجد عملاء مسجلين بعد' : 'No customer user accounts registered yet.')}
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {bookings.map((b) => (
-                    <div key={b.id} className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredUsers.map((u) => (
+                    <div key={u.id} className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 flex flex-col justify-between hover:border-slate-500 transition-all">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 text-sm">{b.serviceTitle}</span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">{b.status}</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-black text-sm text-white line-clamp-1">{u.name}</div>
+                          <span className="text-[10px] font-mono font-bold bg-sky-950 text-sky-300 border border-sky-800 px-2 py-0.5 rounded-full">
+                            ID: {u.id.substring(0, 10)}
+                          </span>
                         </div>
-                        <div className="text-xs text-slate-600 mt-1 flex flex-wrap items-center gap-3">
-                          <span>🚗 {b.vehicleInfo}</span>
-                          <span>📅 {b.date} ({b.timeSlot})</span>
-                          <span className="font-mono text-emerald-700 font-bold">📞 {b.customerPhone || '+965 9900 1234'}</span>
+
+                        <div className="text-xs text-slate-400 flex items-center gap-1.5 mb-1">
+                          <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span className="truncate">{u.email}</span>
+                        </div>
+
+                        <div className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5 mb-3">
+                          <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>{u.phone}</span>
+                        </div>
+
+                        <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-[11px] text-slate-300 mb-3 space-y-1">
+                          <div className="flex justify-between">
+                            <span>{isAr ? 'المركبات المحفوظة:' : 'Garage Vehicles:'}</span>
+                            <span className="font-bold text-white">{u.savedVehicles?.length || 0}</span>
+                          </div>
+                          {u.savedVehicles && u.savedVehicles.length > 0 && (
+                            <div className="text-sky-400 font-semibold truncate">
+                              🚗 {u.savedVehicles[0].year} {u.savedVehicles[0].make} {u.savedVehicles[0].model}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={b.status}
-                          onChange={(e) => onUpdateBooking && onUpdateBooking(b.id, { status: e.target.value as any })}
-                          className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800"
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+                        {u.phone && (
+                          <a
+                            href={`https://wa.me/${u.phone.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150 active:scale-95"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
+
+                        <button
+                          onClick={() => handleDeleteUser(u.id)}
+                          title="Delete User"
+                          className="p-2 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-xl transition-all duration-150 active:scale-95 border border-red-800"
                         >
-                          <option value="Confirmed">Confirmed</option>
-                          <option value="Car Received">Car Received</option>
-                          <option value="In Service Bay">In Service Bay</option>
-                          <option value="Ready for Pickup">Ready for Pickup</option>
-                          <option value="Completed">Completed</option>
-                        </select>
+                          <UserX className="w-4 h-4" />
+                        </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* VIP Test Drive Inquiries */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                    <Car className="w-5 h-5 text-amber-500" />
-                    <span>VIP Showroom Test Drive Inquiries ({testDrives.length})</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Customer reservations for showroom vehicles.</p>
-                </div>
-              </div>
-
-              {testDrives.length === 0 ? (
-                <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl text-xs text-slate-400 font-semibold">
-                  No showroom test drive requests submitted yet.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {testDrives.map((td) => (
-                    <div key={td.id} className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 text-sm">{td.vehicleName}</span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">{td.status}</span>
-                        </div>
-                        <div className="text-xs text-slate-600 mt-1 flex flex-wrap items-center gap-3">
-                          <span>📍 {td.location}</span>
-                          <span>📅 {td.date}</span>
-                          <span className="font-mono text-emerald-700 font-bold">📞 {td.customerPhone || td.advisorPhone}</span>
-                        </div>
-                      </div>
-
-                      <select
-                        value={td.status}
-                        onChange={(e) => onUpdateTestDrive && onUpdateTestDrive(td.id, { status: e.target.value as any })}
-                        className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800"
-                      >
-                        <option value="Pending Confirmation">Pending Confirmation</option>
-                        <option value="Confirmed VIP Slot">Confirmed VIP Slot</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Registered Customer Accounts Directory */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2 mb-1">
-                <Users className="w-5 h-5 text-sky-600" />
-                <span>Registered Customer User Accounts</span>
-              </h3>
-              <p className="text-xs text-slate-500 mb-5">Verified user profiles stored in the workshop database.</p>
-
-              {registeredUsers.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-400">No registered profiles in local session.</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {registeredUsers.map((u, i) => (
-                    <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-sm text-slate-900">{u.name}</div>
-                        <div className="text-xs text-slate-500">{u.email}</div>
-                        <div className="text-xs font-mono font-bold text-sky-700 mt-1">📞 {u.phone}</div>
-                        <div className="text-[11px] text-slate-400 mt-1">Vehicles in Garage: {u.savedVehicles?.length || 0}</div>
-                      </div>
-                      <a
-                        href={`https://wa.me/${u.phone.replace(/[^0-9]/g, '')}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-xl transition-colors"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </a>
                     </div>
                   ))}
                 </div>
@@ -1160,480 +1790,461 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* TAB 4: SHOPIFY-STYLE WEBSITE BUILDER & SECTION EDITOR */}
+        {/* TAB 6: WEBSITE BUILDER */}
         {activeTab === 'builder' && (
-          <div className="max-w-4xl bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
+          <div className="max-w-4xl rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-lg space-y-8" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
             <div>
-              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-sky-600" />
-                <span>Shopify-Style Visual Website Builder</span>
+              <h2 className="text-xl font-black text-white flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                <span>{isAr ? 'تخصيص الهوية والنصوص والخلفية الديناميكية' : 'Shopify-Style Website Builder & Media Engine'}</span>
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Directly customize headlines, announcements, logos, hero banners, and section visibility across all pages.
-              </p>
             </div>
 
             <form onSubmit={handleSaveWebsiteBuilder} className="space-y-6">
-              
-              {/* Site Logo & Brand Banner */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                <h3 className="text-sm font-bold uppercase text-slate-900">1. Brand Logo & Header Icon</h3>
+              <div className="p-5 bg-slate-900/90 rounded-2xl border border-slate-700/80 space-y-4">
+                <h3 className="text-sm font-bold uppercase text-white flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                  <span>1. {isAr ? 'اسم الموقع والشعار' : 'Website Branding, Logo & Favicon'}</span>
+                </h3>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Logo Image URL
-                    </label>
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'اسم الموقع' : 'Brand Title'}</label>
+                    <input
+                      type="text"
+                      required
+                      value={siteName}
+                      onChange={(e) => {
+                        setSiteName(e.target.value);
+                        updateSiteSettings({ siteName: e.target.value });
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'الشعار النصي' : 'Tagline / Motto'}</label>
+                    <input
+                      type="text"
+                      value={motto}
+                      onChange={(e) => {
+                        setMotto(e.target.value);
+                        updateSiteSettings({ motto: e.target.value });
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'رابط الشعار' : 'Logo URL'}</label>
                     <input
                       type="url"
                       value={logoUrl}
-                      onChange={(e) => setLogoUrl(e.target.value)}
+                      onChange={(e) => {
+                        setLogoUrl(e.target.value);
+                        updateSiteSettings({ logoUrl: e.target.value });
+                      }}
                       placeholder="https://..."
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-mono"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Or Upload Logo Image File
-                    </label>
-                    <label className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-white border border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors">
-                      <Upload className="w-4 h-4 text-sky-600" />
-                      <span>Choose Local File</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(e, setLogoUrl)}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {logoUrl && (
-                  <div className="flex items-center gap-3 pt-2">
-                    <span className="text-xs text-slate-500">Logo Preview:</span>
-                    <img src={logoUrl} alt="Logo" className="h-10 object-contain rounded bg-white p-1 border" />
-                  </div>
-                )}
-              </div>
-
-              {/* Announcement Bar Customizer */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold uppercase text-slate-900">2. Top Announcement Bar</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowAnnouncement(!showAnnouncement)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-sky-600"
-                  >
-                    {showAnnouncement ? <ToggleRight className="w-5 h-5 text-emerald-600" /> : <ToggleLeft className="w-5 h-5 text-slate-400" />}
-                    <span>{showAnnouncement ? 'Visible' : 'Hidden'}</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Text (English)</label>
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'أيقونة التبويب Favicon' : 'Favicon URL'}</label>
                     <input
-                      type="text"
-                      value={announcementText}
-                      onChange={(e) => setAnnouncementText(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold"
+                      type="url"
+                      value={faviconUrl}
+                      onChange={(e) => {
+                        setFaviconUrl(e.target.value);
+                        updateSiteSettings({ faviconUrl: e.target.value });
+                      }}
+                      placeholder="https://..."
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Text (Arabic)</label>
-                    <input
-                      type="text"
-                      value={announcementTextAr}
-                      onChange={(e) => setAnnouncementTextAr(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold"
-                      dir="rtl"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Hero Section Headlines */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                <h3 className="text-sm font-bold uppercase text-slate-900">3. Hero Banner Headlines & Subtitles</h3>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Hero Main Title (English)</label>
-                    <input
-                      type="text"
-                      value={heroTitle}
-                      onChange={(e) => setHeroTitle(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Hero Main Title (Arabic)</label>
-                    <input
-                      type="text"
-                      value={heroTitleAr}
-                      onChange={(e) => setHeroTitleAr(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold"
-                      dir="rtl"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Hero Subtitle (English)</label>
-                      <textarea
-                        rows={2}
-                        value={heroSubtitle}
-                        onChange={(e) => setHeroSubtitle(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Hero Subtitle (Arabic)</label>
-                      <textarea
-                        rows={2}
-                        value={heroSubtitleAr}
-                        onChange={(e) => setHeroSubtitleAr(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-medium"
-                        dir="rtl"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section Headlines & Titles */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                <h3 className="text-sm font-bold uppercase text-slate-900">4. Section Header Titles</h3>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Services Bay Title</label>
-                    <input
-                      type="text"
-                      value={servicesTitle}
-                      onChange={(e) => setServicesTitle(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Parts Catalog Title</label>
-                    <input
-                      type="text"
-                      value={partsTitle}
-                      onChange={(e) => setPartsTitle(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Showroom Title</label>
-                    <input
-                      type="text"
-                      value={showroomTitle}
-                      onChange={(e) => setShowroomTitle(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Interactive Widget Toggles */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                <h3 className="text-sm font-bold uppercase text-slate-900 mb-3">5. Live Widgets & Feature Toggles</h3>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-slate-900">OBD2 Diagnostic Scanner</div>
-                      <div className="text-[10px] text-slate-400">Interactive DTC Fault Decoder</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowObdScanner(!showObdScanner)}
-                    >
-                      {showObdScanner ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-slate-400" />}
-                    </button>
-                  </div>
-
-                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-slate-900">Mechanic AI Chat Assistant</div>
-                      <div className="text-[10px] text-slate-400">Live chat widget in corner</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowChatbot(!showChatbot)}
-                    >
-                      {showChatbot ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-slate-400" />}
-                    </button>
-                  </div>
-
-                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-slate-900">Live Sales Proof Toasts</div>
-                      <div className="text-[10px] text-slate-400">Popup buying activity</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowSalesToast(!showSalesToast)}
-                    >
-                      {showSalesToast ? <ToggleRight className="w-6 h-6 text-emerald-600" /> : <ToggleLeft className="w-6 h-6 text-slate-400" />}
-                    </button>
                   </div>
                 </div>
               </div>
 
               {builderSavedToast && (
-                <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span>Website text copy and section configurations updated successfully!</span>
+                <div className="p-3.5 bg-emerald-950/80 border border-emerald-800 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>{isAr ? 'تم حفظ التعديلات بنجاح!' : 'Website branding configurations saved successfully!'}</span>
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full py-4 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-600/25 active:scale-98"
+                className="w-full py-4 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-150 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+                style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
               >
                 <Save className="w-4 h-4" />
-                <span>Save Website Builder Changes</span>
+                <span>{isAr ? 'حفظ إعدادات الموقع' : 'Save Website Builder Changes'}</span>
               </button>
             </form>
           </div>
         )}
 
-        {/* TAB 5: THEME COLORS & FONT BUILDER */}
+        {/* TAB 7: THEME & COLOR CUSTOMIZER */}
         {activeTab === 'theme' && (
-          <div className="max-w-4xl bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
+          <div className="max-w-4xl rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-lg space-y-8" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
             <div>
-              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <Palette className="w-5 h-5 text-sky-600" />
-                <span>Granular Color Palette & Typography Engine</span>
+              <h2 className="text-xl font-black text-white flex items-center gap-2">
+                <Palette className="w-5 h-5 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                <span>{isAr ? 'محرر الألوان والخطوط والتحكم في الحجم' : 'Color Wheels, Font Scaler & Surface Engine'}</span>
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Customize individual component colors, background schemes, and typography styles.
-              </p>
             </div>
 
             <form onSubmit={handleSaveThemeSettings} className="space-y-8">
               
-              {/* Theme Color Presets & Granular Color Pickers */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase text-slate-700">Preset Brand Accents</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {THEME_PRESETS.map((p) => (
+              {/* Text Size Scaler */}
+              <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase text-white flex items-center gap-1.5">
+                    <Maximize2 className="w-4 h-4 text-sky-400" />
+                    <span>{isAr ? 'مقياس حجم الخط الشامل للموقع' : 'Global Typography & Text Size Scaler'}</span>
+                  </label>
+                  <span className="text-xs font-mono font-bold text-sky-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                    {fontSizeScale}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                  {FONT_SCALES.map((scale) => (
                     <button
-                      key={p.hex}
+                      key={scale.value}
                       type="button"
                       onClick={() => {
-                        setThemeColor(p.hex);
-                        setAccentColor(p.hex);
+                        setFontSizeScale(scale.value);
+                        updateSiteSettings({ fontSizeScale: scale.value });
                       }}
-                      className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-all ${
-                        themeColor === p.hex ? 'border-sky-600 bg-sky-50 shadow-sm ring-2 ring-sky-600/20' : 'border-slate-200 hover:border-slate-300'
+                      className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all duration-150 active:scale-95 ${
+                        fontSizeScale === scale.value
+                          ? 'border-sky-500 bg-sky-950 text-white ring-2 ring-sky-500/20'
+                          : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
                       }`}
                     >
-                      <div className="w-5 h-5 rounded-full shrink-0 shadow-inner" style={{ backgroundColor: p.hex }} />
-                      <div className="truncate text-xs font-bold text-slate-900">{p.name}</div>
+                      {scale.label}
                     </button>
                   ))}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Primary Theme / Accent
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={themeColor}
-                        onChange={(e) => setThemeColor(e.target.value)}
-                        className="w-10 h-10 rounded-xl cursor-pointer border border-slate-200"
-                      />
-                      <input
-                        type="text"
-                        value={themeColor}
-                        onChange={(e) => setThemeColor(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Navbar / Header Background
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={headerBg}
-                        onChange={(e) => setHeaderBg(e.target.value)}
-                        className="w-10 h-10 rounded-xl cursor-pointer border border-slate-200"
-                      />
-                      <input
-                        type="text"
-                        value={headerBg}
-                        onChange={(e) => setHeaderBg(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Footer Background
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={footerBg}
-                        onChange={(e) => setFooterBg(e.target.value)}
-                        className="w-10 h-10 rounded-xl cursor-pointer border border-slate-200"
-                      />
-                      <input
-                        type="text"
-                        value={footerBg}
-                        onChange={(e) => setFooterBg(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold"
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Typography & Custom Font Builder */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <h3 className="text-xs font-bold uppercase text-slate-700 flex items-center gap-1.5">
-                  <Type className="w-4 h-4 text-sky-600" />
-                  <span>Typography & Custom Font Family</span>
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {FONT_OPTIONS.map((f) => (
+              {/* Font Family Selection */}
+              <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-3">
+                <label className="block text-xs font-bold uppercase text-white flex items-center gap-1.5">
+                  <Type className="w-4 h-4 text-amber-400" />
+                  <span>{isAr ? 'نوع الخط المعتمد' : 'Primary Font Family'}</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {FONT_OPTIONS.map((font) => (
                     <button
-                      key={f.id}
+                      key={font.id}
                       type="button"
-                      onClick={() => setFontStyle(f.id)}
-                      className={`p-4 rounded-2xl border text-left transition-all ${
-                        fontStyle === f.id ? 'border-sky-600 bg-sky-50/60 ring-2 ring-sky-600/20' : 'border-slate-200 hover:border-slate-300'
+                      onClick={() => {
+                        setFontStyle(font.id);
+                        updateSiteSettings({ fontStyle: font.id });
+                      }}
+                      className={`p-3.5 rounded-2xl border text-left transition-all duration-150 active:scale-95 flex flex-col justify-between ${
+                        fontStyle === font.id
+                          ? 'border-sky-500 bg-slate-950 text-white ring-2 ring-sky-500/20'
+                          : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-bold text-slate-900">{f.name}</span>
-                        {fontStyle === f.id && <Check className="w-4 h-4 text-sky-600" />}
+                      <div className="text-xs font-bold text-white mb-0.5">{font.name}</div>
+                      <div className="text-[11px] text-slate-400">{font.desc}</div>
+                      <div className="text-xs font-semibold text-sky-400 mt-2 font-mono">Aa: {font.sample}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Surface Customizer (Card Background, Borders & Neon) */}
+              <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-4">
+                <h3 className="text-xs font-bold uppercase text-white flex items-center gap-1.5">
+                  <Square className="w-4 h-4 text-emerald-400" />
+                  <span>{isAr ? 'تخصيص بطاقات العرض والحواف' : 'Listing Cards Surface & Side Borders'}</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">{isAr ? 'لون خلفية البطاقات' : 'Card Background'}</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={cardBg}
+                        onChange={(e) => {
+                          setCardBg(e.target.value);
+                          updateSiteSettings({ cardBg: e.target.value });
+                        }}
+                        className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0"
+                      />
+                      <input
+                        type="text"
+                        value={cardBg}
+                        onChange={(e) => {
+                          setCardBg(e.target.value);
+                          updateSiteSettings({ cardBg: e.target.value });
+                        }}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">{isAr ? 'لون الحواف والحدود' : 'Border Color'}</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={cardBorderColor.startsWith('#') ? cardBorderColor : '#334155'}
+                        onChange={(e) => {
+                          setCardBorderColor(e.target.value);
+                          updateSiteSettings({ cardBorderColor: e.target.value });
+                        }}
+                        className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0"
+                      />
+                      <input
+                        type="text"
+                        value={cardBorderColor}
+                        onChange={(e) => {
+                          setCardBorderColor(e.target.value);
+                          updateSiteSettings({ cardBorderColor: e.target.value });
+                        }}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">{isAr ? 'استدارة الزوايا' : 'Corner Curvature'}</label>
+                    <select
+                      value={cardBorderRadius}
+                      onChange={(e) => {
+                        setCardBorderRadius(e.target.value);
+                        updateSiteSettings({ cardBorderRadius: e.target.value });
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white"
+                    >
+                      {BORDER_RADIUS_OPTIONS.map(b => (
+                        <option key={b.value} value={b.value}>{b.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-slate-800">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={enableCarbonPattern}
+                      onChange={(e) => {
+                        setEnableCarbonPattern(e.target.checked);
+                        updateSiteSettings({ enableCarbonPattern: e.target.checked });
+                      }}
+                      className="w-4 h-4 rounded text-sky-600 bg-slate-950 border-slate-700"
+                    />
+                    <span>{isAr ? 'تفعيل شبكة ألياف الكربون الخفية' : 'Enable Carbon Fiber Subtle Texture'}</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={enableNeonGlow}
+                      onChange={(e) => {
+                        setEnableNeonGlow(e.target.checked);
+                        updateSiteSettings({ enableNeonGlow: e.target.checked });
+                      }}
+                      className="w-4 h-4 rounded text-sky-600 bg-slate-950 border-slate-700"
+                    />
+                    <span>{isAr ? 'توهج النيون الرياضي' : 'Enable Subtle Neon Accent Glow'}</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Quick Harmony Presets & Custom Color Inputs */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold uppercase text-slate-300">{isAr ? 'قوالب التناسق السريع' : 'Quick Harmony Presets'}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {THEME_PRESETS.map((p) => (
+                    <button
+                      key={p.name}
+                      type="button"
+                      onClick={() => {
+                        setThemeColor(p.primary);
+                        setSecondaryAccent(p.secondary);
+                        setHeaderBg(p.headerBg);
+                        setFooterBg(p.footerBg);
+                        setCardBg(p.cardBg);
+                        setPageBg(p.pageBg);
+                        updateSiteSettings({ 
+                          themeColor: p.primary, 
+                          secondaryAccent: p.secondary, 
+                          accentColor: p.primary,
+                          headerBg: p.headerBg,
+                          footerBg: p.footerBg,
+                          cardBg: p.cardBg,
+                          pageBg: p.pageBg
+                        });
+                      }}
+                      className="p-3 rounded-2xl border border-slate-700 bg-slate-900 hover:border-sky-500 text-left flex items-center gap-2.5 transition-all duration-150 active:scale-95"
+                    >
+                      <div className="flex -space-x-1.5 shrink-0">
+                        <div className="w-5 h-5 rounded-full shadow-sm" style={{ backgroundColor: p.primary }} />
+                        <div className="w-5 h-5 rounded-full shadow-sm ring-1 ring-slate-900" style={{ backgroundColor: p.secondary }} />
                       </div>
-                      <p className="text-[11px] text-slate-500 mb-2">{f.desc}</p>
-                      <div className="text-xs font-bold text-slate-800 bg-white p-2 rounded-lg border border-slate-100 truncate">
-                        {f.sample}
-                      </div>
+                      <div className="truncate text-xs font-bold text-white">{p.name}</div>
                     </button>
                   ))}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                    Or Enter Custom Font-Family (e.g. 'Orbitron', sans-serif)
-                  </label>
-                  <input
-                    type="text"
-                    value={customFontFamily}
-                    onChange={(e) => setCustomFontFamily(e.target.value)}
-                    placeholder="e.g. 'Cairo', sans-serif"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-mono"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800">
+                  <div className="bg-slate-900 p-3.5 rounded-2xl border border-slate-800">
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">
+                      1. {isAr ? 'اللون الأساسي' : 'Primary Accent'}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={themeColor}
+                        onChange={(e) => {
+                          setThemeColor(e.target.value);
+                          updateSiteSettings({ themeColor: e.target.value, accentColor: e.target.value });
+                        }}
+                        className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0"
+                      />
+                      <input
+                        type="text"
+                        value={themeColor}
+                        onChange={(e) => {
+                          setThemeColor(e.target.value);
+                          updateSiteSettings({ themeColor: e.target.value, accentColor: e.target.value });
+                        }}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 p-3.5 rounded-2xl border border-slate-800">
+                    <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">
+                      2. {isAr ? 'اللون الثانوي' : 'Secondary Accent'}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={secondaryAccent}
+                        onChange={(e) => {
+                          setSecondaryAccent(e.target.value);
+                          updateSiteSettings({ secondaryAccent: e.target.value });
+                        }}
+                        className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0"
+                      />
+                      <input
+                        type="text"
+                        value={secondaryAccent}
+                        onChange={(e) => {
+                          setSecondaryAccent(e.target.value);
+                          updateSiteSettings({ secondaryAccent: e.target.value });
+                        }}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {themeSavedToast && (
-                <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span>Theme styling and typography applied successfully!</span>
+                <div className="p-3.5 bg-emerald-950/80 border border-emerald-800 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>{isAr ? 'تم تطبيق وحفظ إعدادات المظهر بنجاح!' : 'Theme styling applied & saved successfully!'}</span>
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full py-4 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-600/25 active:scale-98"
+                className="w-full py-4 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-150 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+                style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
               >
                 <Save className="w-4 h-4" />
-                <span>Save Theme & Color Settings</span>
+                <span>{isAr ? 'حفظ إعدادات الألوان والخطوط' : 'Save Theme & Style Configurations'}</span>
               </button>
             </form>
           </div>
         )}
 
-        {/* TAB 6: BUSINESS CONTACTS */}
+        {/* TAB 8: BUSINESS */}
         {activeTab === 'business' && (
-          <div className="max-w-3xl bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+          <div className="max-w-3xl rounded-3xl p-6 sm:p-8 border border-slate-700/60 shadow-lg" style={{ backgroundColor: 'var(--card-bg, #1e293b)' }}>
             <div className="mb-6">
-              <h2 className="text-xl font-black text-slate-900">Garage & Contact Information</h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Reflects instantly across the top Navbar, footer contact cards, and booking receipts.
-              </p>
+              <h2 className="text-xl font-black text-white">{isAr ? 'بيانات الكراج والاتصال الرسمي' : 'Garage & Contact Information'}</h2>
             </div>
 
             <form onSubmit={handleSaveBusiness} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-sky-600" />
-                  <span>Workshop Official Phone (Direct Line)</span>
+                <label className="block text-xs font-bold uppercase text-slate-300 mb-1 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-sky-400" style={{ color: 'var(--primary-accent, #0284c7)' }} />
+                  <span>{isAr ? 'هاتف الكراج المباشر' : 'Workshop Official Phone'}</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+965 2200 2739"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-sky-500"
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    updateSiteSettings({ phone: e.target.value });
+                  }}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:border-sky-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1 flex items-center gap-1.5">
-                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>WhatsApp Business Helpline</span>
+                <label className="block text-xs font-bold uppercase text-slate-300 mb-1 flex items-center gap-1.5">
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isAr ? 'رقم الواتساب التجاري' : 'WhatsApp Business Helpline'}</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder="+965 9900 1234"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-sky-500"
+                  onChange={(e) => {
+                    setWhatsapp(e.target.value);
+                    updateSiteSettings({ whatsapp: e.target.value });
+                  }}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:border-sky-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-red-500" />
-                  <span>Physical Garage & Showroom Location</span>
+                <label className="block text-xs font-bold uppercase text-slate-300 mb-1 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-red-400" />
+                  <span>{isAr ? 'موقع الكراج والمعرض الفعلي' : 'Physical Garage & Showroom Location'}</span>
                 </label>
                 <textarea
                   rows={3}
                   required
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Shuwaikh Industrial Area 1, Block 2, Street 18, Kuwait City"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-semibold focus:outline-none focus:border-sky-500"
+                  onChange={(e) => {
+                    setLocation(e.target.value);
+                    updateSiteSettings({ location: e.target.value });
+                  }}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-semibold text-white focus:outline-none focus:border-sky-500"
                 />
               </div>
 
               {businessSavedToast && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span>Business contact info updated and saved!</span>
+                <div className="p-3 bg-emerald-950/80 border border-emerald-800 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>{isAr ? 'تم تحديث وحفظ بيانات الاتصال!' : 'Business contact info updated and saved!'}</span>
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-600/25 active:scale-98"
+                className="w-full py-3.5 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-150 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+                style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
               >
                 <Save className="w-4 h-4" />
-                <span>Save Business Information</span>
+                <span>{isAr ? 'حفظ بيانات الكراج' : 'Save Business Information'}</span>
               </button>
             </form>
           </div>
@@ -1641,211 +2252,436 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       </div>
 
-      {/* Visual Add / Edit Listing Modal with File Upload Support */}
+      {/* FULL 5-TAB STRUCTURED LISTING EDITOR MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-8">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-4xl bg-slate-900 text-white rounded-3xl shadow-2xl border border-slate-700/80 overflow-hidden my-6 max-h-[92vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="p-6 text-white flex items-center justify-between shrink-0" style={{ backgroundColor: 'var(--header-bg, #0f172a)' }}>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                  {editingItemId ? 'Edit Listing' : 'Create New Listing'}
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--secondary-accent, #f59e0b)' }}>
+                  {editingItemId ? (isAr ? 'تعديل العنصر (مزامنة فورية)' : 'Edit Listing (Synced Live)') : (isAr ? 'إنشاء إدراج جديد' : 'Create New Listing (Synced Live)')}
                 </span>
-                <h3 className="text-lg font-bold capitalize">
-                  {editingItemType === 'product' ? 'Auto Part / Hardware' : editingItemType === 'service' ? 'Garage Service Bay' : 'Showroom Car'}
+                <h3 className="text-lg font-black tracking-tight text-white">
+                  {editingItemType === 'product' ? (isAr ? 'قطعة غيار وأجهزة أداء' : 'Auto Part / Hardware Upgrade') : editingItemType === 'service' ? (isAr ? 'خدمة منصة كراج' : 'Garage Service Bay') : (isAr ? 'سيارة معرض معتمدة' : 'Showroom Car')}
                 </h3>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-white p-1.5 rounded-xl bg-white/10 transition-all duration-150 active:scale-95"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveListing} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Title (English)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g. Stage 2 Custom Dyno ECU Remapping"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold"
-                />
-              </div>
+            {/* 5-Tab Navigation Bar */}
+            <div className="flex items-center gap-1 p-2 bg-slate-950 border-b border-slate-800 overflow-x-auto shrink-0 no-scrollbar">
+              <button
+                type="button"
+                onClick={() => setModalTab('overview')}
+                className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 whitespace-nowrap flex items-center gap-1.5 ${
+                  modalTab === 'overview' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+                style={{ color: modalTab === 'overview' ? 'var(--primary-accent, #0284c7)' : undefined }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>1. {isAr ? 'الوصف والنظرة العامة' : 'Overview & Description'}</span>
+              </button>
 
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Title (Arabic Translation)
-                </label>
-                <input
-                  type="text"
-                  value={formTitleAr}
-                  onChange={(e) => setFormTitleAr(e.target.value)}
-                  placeholder="e.g. برمجة ستيج 2 داينو مخصصة"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold"
-                  dir="rtl"
-                />
-              </div>
+              <button
+                type="button"
+                onClick={() => setModalTab('specs')}
+                className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 whitespace-nowrap flex items-center gap-1.5 ${
+                  modalTab === 'specs' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+                style={{ color: modalTab === 'specs' ? 'var(--primary-accent, #0284c7)' : undefined }}
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>2. {isAr ? 'المواصفات التقنية' : 'Detailed Specs'} ({formSpecsTable.length + formSpecsList.length})</span>
+              </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                    Price in Kuwaiti Dinar (KWD)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    step="0.5"
-                    value={formPrice}
-                    onChange={(e) => setFormPrice(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold"
-                  />
-                </div>
+              <button
+                type="button"
+                onClick={() => setModalTab('fitment')}
+                className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 whitespace-nowrap flex items-center gap-1.5 ${
+                  modalTab === 'fitment' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+                style={{ color: modalTab === 'fitment' ? 'var(--primary-accent, #0284c7)' : undefined }}
+              >
+                <Car className="w-3.5 h-3.5" />
+                <span>3. {isAr ? 'التوافق مع السيارات' : 'Vehicle Compatibility'} ({formCompatibility.length})</span>
+              </button>
 
-                {editingItemType === 'product' && (
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Category
+              <button
+                type="button"
+                onClick={() => setModalTab('box')}
+                className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 whitespace-nowrap flex items-center gap-1.5 ${
+                  modalTab === 'box' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+                style={{ color: modalTab === 'box' ? 'var(--primary-accent, #0284c7)' : undefined }}
+              >
+                <Package className="w-3.5 h-3.5" />
+                <span>4. {isAr ? 'محتويات الصندوق والضمان' : 'In the Box & Warranty'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalTab('reviews')}
+                className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95 whitespace-nowrap flex items-center gap-1.5 ${
+                  modalTab === 'reviews' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+                style={{ color: modalTab === 'reviews' ? 'var(--primary-accent, #0284c7)' : undefined }}
+              >
+                <Star className="w-3.5 h-3.5" />
+                <span>5. {isAr ? 'التقييمات وسجلات الداينو' : 'Reviews & Logs'} ({formReviews.length})</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveListing} className="p-6 space-y-5 overflow-y-auto flex-1">
+              {modalTab === 'overview' && (
+                <div className="space-y-5">
+                  <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <label className="block text-xs font-black uppercase tracking-wider text-sky-400 mb-2">
+                      {isAr ? 'القسم التجاري المباشر' : 'Store Catalog Category'}
                     </label>
-                    <select
-                      value={formCategory}
-                      onChange={(e) => setFormCategory(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold"
-                    >
-                      <option value="Performance Upgrades">Performance Upgrades</option>
-                      <option value="Auto Parts & Hardware">Auto Parts & Hardware</option>
-                      <option value="Diagnosing & Repairing">Diagnosing & Repairing</option>
-                    </select>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {STORE_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => handleCategorySelectionChange(cat.id)}
+                          className={`p-3 rounded-xl border text-left transition-all duration-150 active:scale-95 ${
+                            formCategory === cat.id
+                              ? 'text-white border-sky-500 shadow-md ring-2 ring-sky-500/20'
+                              : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500'
+                          }`}
+                          style={{ backgroundColor: formCategory === cat.id ? 'var(--primary-accent, #0284c7)' : undefined }}
+                        >
+                          <div className="text-xs font-bold leading-tight">{isAr ? cat.labelAr : cat.labelEn}</div>
+                          <div className="text-[10px] opacity-80 truncate">{isAr ? cat.labelEn : cat.labelAr}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                )}
 
-                {editingItemType === 'service' && (
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Service Duration
-                    </label>
-                    <input
-                      type="text"
-                      value={formDuration}
-                      onChange={(e) => setFormDuration(e.target.value)}
-                      placeholder="e.g. 2 - 3 Hours"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold"
-                    />
-                  </div>
-                )}
-
-                {editingItemType === 'vehicle' && (
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Model Year & Mileage
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="number"
-                        value={formYear}
-                        onChange={(e) => setFormYear(parseInt(e.target.value) || 2024)}
-                        placeholder="Year (2024)"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold"
-                      />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'العنوان (English)' : 'Title (English)'}</label>
                       <input
                         type="text"
-                        value={formMileage}
-                        onChange={(e) => setFormMileage(e.target.value)}
-                        placeholder="18,000 KM"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold"
+                        required
+                        value={formTitle}
+                        onChange={(e) => setFormTitle(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'العنوان بالعربي' : 'Title (Arabic Translation)'}</label>
+                      <input
+                        type="text"
+                        value={formTitleAr}
+                        onChange={(e) => setFormTitleAr(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
+                        dir="rtl"
                       />
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Image Input with Upload button */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase text-slate-700">
-                  Item Image (URL or Local Upload)
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    required
-                    value={formImage}
-                    onChange={(e) => setFormImage(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="sm:col-span-2 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-mono"
-                  />
-                  <label className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer text-xs font-bold text-slate-700 border border-slate-200 transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-sky-600" />
-                    <span>Upload Image</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'السعر (KWD)' : 'Price (KWD)'}</label>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        step="0.5"
+                        value={formPrice}
+                        onChange={(e) => setFormPrice(parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'نص السعر المخصص' : 'Custom Price Display'}</label>
+                      <input
+                        type="text"
+                        value={formPriceDisplay}
+                        onChange={(e) => setFormPriceDisplay(e.target.value)}
+                        placeholder="35 KWD (Cash on Delivery)"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'الشارة' : 'Badge'}</label>
+                      <input
+                        type="text"
+                        value={formBadge}
+                        onChange={(e) => setFormBadge(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Multi-Image Manager with Square Thumbnail Previews */}
+                  <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+                    <label className="block text-xs font-bold uppercase text-slate-300 flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-sky-400" />
+                      <span>{isAr ? `معرض الصور متعدد الزوايا (${formImages.length} صور)` : `Multi-Image Gallery (${formImages.length} images)`}</span>
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                      <input
+                        type="url"
+                        value={newImageUrlInput}
+                        onChange={(e) => setNewImageUrlInput(e.target.value)}
+                        placeholder="https://..."
+                        className="sm:col-span-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white"
+                      />
+                      
+                      <button
+                        type="button"
+                        onClick={handleAddImageUrl}
+                        className="px-3 py-2 text-white font-bold text-xs rounded-xl transition-all duration-150 active:scale-95"
+                        style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
+                      >
+                        <Plus className="w-3.5 h-3.5 inline mr-1" />
+                        <span>{isAr ? 'إضافة رابط' : 'Add URL'}</span>
+                      </button>
+
+                      <label className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-900 hover:bg-slate-800 rounded-xl cursor-pointer text-xs font-bold text-slate-200 border border-slate-700 transition-all duration-150 active:scale-95">
+                        <Upload className="w-3.5 h-3.5 text-sky-400" />
+                        <span>{isAr ? 'رفع ملفات' : 'Upload Multi'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleMultiFileUpload}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 pt-2">
+                      {formImages.map((imgUrl, index) => (
+                        <div key={index} className="relative group rounded-xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square">
+                          <img src={imgUrl} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            {index !== 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetPrimaryImage(index)}
+                                className="p-1 bg-amber-400 text-slate-950 rounded-lg"
+                                title="Primary"
+                              >
+                                <Star className="w-3 h-3 fill-current" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                              className="p-1 bg-red-600 text-white rounded-lg"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {modalTab === 'specs' && (
+                <div className="space-y-6">
+                  <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+                    <h4 className="text-xs font-bold uppercase text-white flex items-center gap-1.5">
+                      <Settings className="w-4 h-4 text-sky-400" />
+                      <span>{isAr ? 'جدول المواصفات التقنية (مفتاح - قيمة)' : 'Technical Specifications Table (Key-Value)'}</span>
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                      <input
+                        type="text"
+                        value={newTableKey}
+                        onChange={(e) => setNewTableKey(e.target.value)}
+                        placeholder={isAr ? 'اسم البند (مثال: قوة الضغط)' : 'Parameter (e.g. Boost Output)'}
+                        className="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white"
+                      />
+                      <input
+                        type="text"
+                        value={newTableValue}
+                        onChange={(e) => setNewTableValue(e.target.value)}
+                        placeholder={isAr ? 'القيمة (مثال: 1.85 Bar)' : 'Value (e.g. 1.85 Bar)'}
+                        className="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newTableKey.trim() && newTableValue.trim()) {
+                            setFormSpecsTable(prev => [...prev, { key: newTableKey.trim(), value: newTableValue.trim() }]);
+                            setNewTableKey('');
+                            setNewTableValue('');
+                          }
+                        }}
+                        className="py-2 px-3 text-white font-bold text-xs rounded-xl transition-all duration-150 active:scale-95"
+                        style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
+                      >
+                        <Plus className="w-3.5 h-3.5 inline mr-1" />
+                        <span>{isAr ? 'إضافة' : 'Add Row'}</span>
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-slate-800 bg-slate-900 rounded-xl border border-slate-800">
+                      {formSpecsTable.map((entry, idx) => (
+                        <div key={idx} className="p-2.5 px-3.5 flex items-center justify-between text-xs text-slate-200">
+                          <span className="font-bold text-white">{entry.key}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-slate-400">{entry.value}</span>
+                            <button
+                              type="button"
+                              onClick={() => setFormSpecsTable(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {modalTab === 'fitment' && (
+                <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <h4 className="text-xs font-bold uppercase text-white flex items-center gap-1.5">
+                    <Car className="w-4 h-4 text-sky-400" />
+                    <span>{isAr ? 'قائمة السيارات المتوافقة' : 'Vehicle Fitment Compatibility'}</span>
+                  </h4>
+                  <div className="flex gap-2">
                     <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload(e, setFormImage)}
+                      type="text"
+                      value={newCompatInput}
+                      onChange={(e) => setNewCompatInput(e.target.value)}
+                      placeholder="e.g. Nissan Patrol Y62 5.6L V8 (2014-2024)"
+                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white"
                     />
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Description & Specifications (English)
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Detailed engineering breakdown, GCC fitment specs, or procedure."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Description (Arabic Translation)
-                </label>
-                <textarea
-                  rows={2}
-                  value={formDescriptionAr}
-                  onChange={(e) => setFormDescriptionAr(e.target.value)}
-                  placeholder="الوصف التفصيلي باللغة العربية"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold"
-                  dir="rtl"
-                />
-              </div>
-
-              {/* Live Preview Card */}
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                <div className="text-[10px] font-bold uppercase text-slate-400 mb-2">Live Preview Card</div>
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-xl bg-slate-200 overflow-hidden shrink-0">
-                    <img src={formImage || 'https://via.placeholder.com/150'} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newCompatInput.trim()) {
+                          setFormCompatibility(prev => [...prev, newCompatInput.trim()]);
+                          setNewCompatInput('');
+                        }
+                      }}
+                      className="py-2 px-4 text-white font-bold text-xs rounded-xl transition-all duration-150 active:scale-95"
+                      style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
+                    >
+                      <Plus className="w-3.5 h-3.5 inline mr-1" />
+                      <span>{isAr ? 'إضافة' : 'Add'}</span>
+                    </button>
                   </div>
-                  <div className="truncate">
-                    <div className="text-xs font-bold text-slate-900 truncate">{formTitle || 'Item Title Preview'}</div>
-                    <div className="text-xs font-black text-sky-600">{formPrice} KWD • {editingItemType === 'product' ? 'Cash on Delivery' : 'Cash on Arrival'}</div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                    {formCompatibility.map((veh, idx) => (
+                      <div key={idx} className="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Car className="w-3.5 h-3.5 text-sky-400" />
+                          <span>{veh}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setFormCompatibility(prev => prev.filter((_, i) => i !== idx))}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="pt-2 flex items-center justify-end gap-3">
+              {modalTab === 'box' && (
+                <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'فترة الضمان' : 'Warranty'}</label>
+                      <input
+                        type="text"
+                        value={formWarranty}
+                        onChange={(e) => setFormWarranty(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-semibold text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-300 mb-1">{isAr ? 'مستوى صعوبة التركيب' : 'Installation Rating'}</label>
+                      <select
+                        value={formInstallDifficulty}
+                        onChange={(e) => setFormInstallDifficulty(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-semibold text-white"
+                      >
+                        <option value="Easy (DIY) / Plug & Play">Easy (DIY) / Plug & Play</option>
+                        <option value="Medium (Basic Garage)">Medium (Basic Garage)</option>
+                        <option value="Expert (Master Mechanic)">Expert (Master Mechanic)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    {formInTheBox.map((item, idx) => (
+                      <div key={idx} className="bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-between">
+                        <span>✓ {item}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormInTheBox(prev => prev.filter((_, i) => i !== idx))}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {modalTab === 'reviews' && (
+                <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <h4 className="text-xs font-bold uppercase text-white flex items-center gap-1.5">
+                    <Star className="w-4 h-4 text-amber-400" />
+                    <span>{isAr ? 'سجلات وتقييمات العملاء' : 'Reviews & Garage Logs'}</span>
+                  </h4>
+                  <div className="space-y-2">
+                    {formReviews.map((rev, idx) => (
+                      <div key={idx} className="bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white">{rev.author} • {rev.vehicle}</span>
+                          <span className="text-amber-400">{'★'.repeat(rev.rating)}</span>
+                        </div>
+                        <p className="text-slate-300 italic">"{rev.comment}"</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4 flex items-center justify-between border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors"
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all duration-150 active:scale-95"
                 >
-                  Cancel
+                  {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all"
+                  className="px-6 py-2.5 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all duration-150 active:scale-95"
+                  style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
                 >
-                  Save Listing
+                  {isAr ? 'حفظ ونشر في المتجر' : 'Save & Publish to Store'}
                 </button>
               </div>
             </form>

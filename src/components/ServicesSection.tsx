@@ -10,12 +10,15 @@ import {
   Check, 
   X, 
   CheckCircle2, 
-  Sparkles,
-  ArrowRight,
-  HelpCircle,
-  PhoneCall
+  Sparkles, 
+  ArrowRight, 
+  HelpCircle, 
+  PhoneCall, 
+  Banknote,
+  MessageCircle
 } from 'lucide-react';
 import { GarageService, Language, DetailItem } from '../types';
+import { FALLBACK_IMAGE } from './ImageGallery';
 
 export const GARAGE_SERVICES: GarageService[] = [
   {
@@ -27,18 +30,18 @@ export const GARAGE_SERVICES: GarageService[] = [
     priceDisplay: "??? KWD",
     description: "Don't know what's wrong with your vehicle? Book a consultation with our master mechanics for computerized diagnostics and road testing.",
     descriptionAr: "لا تعرف سبب المشكلة في سيارتك؟ احجز موعد استشارة مع كبار المهندسين لفحص الكمبيوتر وتجربة الطريق وتحديد التكلفة بدقة.",
-    longDescription: "❓ Mystery knocking, power loss, or warning lights? 🔍 Full vehicle computer scan and multi-point master mechanic inspection. 📞 Variable custom quote provided directly after initial diagnosis before any repairs begin.",
+    longDescription: "❓ Mystery knocking, power loss, or warning lights? 🔍 Full vehicle computer scan and multi-point master mechanic inspection. 📞 Variable custom quote provided directly after initial diagnosis before any repairs begin. Pay in cash at the bay.",
     icon: "help",
     popular: true,
     isConsultation: true,
     warranty: "Accurate Quote Guarantee",
     image: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1000&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1000&q=80", // Master Inspection
-      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80", // Diagnostic Tool Scan
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Engine Bay Inspection
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Underbody Lift Check
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80"  // Dyno & Sensor Output
+      "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1000&q=80", // Inspection Diagnostic
+      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80", // Sensor Port Scan
+      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Engine Mechanical Check
+      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Underbody Lift Inspection
+      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80"  // Dyno Telemetry
     ],
     features: [
       "Master Mechanic Physical Inspection",
@@ -62,6 +65,7 @@ export const GARAGE_SERVICES: GarageService[] = [
     specsTable: {
       "Diagnostic Tools Used": "Autel MaxiSys Ultra, Bosch Master Diagnostic & OEM CAN-Bus Interfaces",
       "Turnaround Time": "30 to 45 Minutes in Bay",
+      "Payment Terms": "Pay in Cash at Bay / Arrival",
       "Report Type": "Digital PDF Report Sent Direct to WhatsApp",
       "Inspection Guarantee": "100% Free Follow-Up Check if Same Code Reappears"
     }
@@ -74,17 +78,17 @@ export const GARAGE_SERVICES: GarageService[] = [
     price: 285,
     description: "Custom dyno-calibrated ECU flash improving throttle response, ignition advance, and boost curves for peak power in high desert temperatures.",
     descriptionAr: "برمجة متقدمة لكمبيوتر السيارة لرفع الأحصنة والعزم مع تحسين استجابة دواسة الوقود وتبريد حرارة المحرك.",
-    longDescription: "🚀 Dyno-proven Stage I and II calibrations custom configured for Kuwait fuels and climate. ⚙️ Calibrated by master technicians with safety limiters intact. 🔧 Includes before & after dyno graph report.",
+    longDescription: "🚀 Dyno-proven Stage I and II calibrations custom configured for Kuwait fuels and climate. ⚙️ Calibrated by master technicians with safety limiters intact. 🔧 Includes before & after dyno graph report. Payment is strictly cash on completion.",
     icon: "cpu",
     popular: true,
     warranty: "2 Years / 40,000 KM",
     image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80", // Dyno Run
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Software Map Tables
-      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80", // Supercar on Dynojet
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Engine Bay Sensor Hookups
-      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80"  // Dyno Chart Printout
+      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80", // Dyno Run Bay
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Tuning Software Tables
+      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80", // Dynojet Cell
+      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Lambda Sensor Hookup
+      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80"  // Dyno Graph Printout
     ],
     features: [
       "+45 to +85 WHP Dyno Gains",
@@ -108,6 +112,7 @@ export const GARAGE_SERVICES: GarageService[] = [
       "Dyno Facility": "Dynojet 4WD All-Wheel Drive High-Inertia Cell",
       "Supported Fuels": "95 Octane, 98 Super, E85 Flex-Fuel",
       "Average Gains": "+45 WHP (Stage 1) / +85 WHP (Stage 2 with Downpipe)",
+      "Payment Terms": "Pay 285 KWD Cash at Bay on Completion",
       "Warranty": "2 Years Official Map & Calibration Warranty"
     }
   },
@@ -119,7 +124,7 @@ export const GARAGE_SERVICES: GarageService[] = [
     price: 45,
     description: "Liqui Moly / Motul 300V high-temperature synthetic oil replacement, OEM filter, and 30-point Kuwait summer vehicle safety check.",
     descriptionAr: "تبديل زيت عالي الجودة للحرارة المرتفعة مع فلتر وكالة وفحص شامل لـ 30 نقطة سلامة.",
-    longDescription: "🛢️ Premium Motul/Liqui Moly 5W-40 full synthetic oil designed to withstand 50°C+ ambient heat. 🔍 Comprehensive brake fluid, coolant, battery health, and suspension inspection. 🚗 Fast 45-minute express lane service.",
+    longDescription: "🛢️ Premium Motul/Liqui Moly 5W-40 full synthetic oil designed to withstand 50°C+ ambient heat. 🔍 Comprehensive brake fluid, coolant, battery health, and suspension inspection. 🚗 Fast 45-minute express lane service. Pay in cash at the bay.",
     icon: "droplet",
     warranty: "6 Months / 10,000 KM",
     image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80",
@@ -154,6 +159,7 @@ export const GARAGE_SERVICES: GarageService[] = [
       "Oil Specifications": "API SP, ACEA A3/B4, MB 229.5, Porsche A40",
       "Inspection Points": "30 Mechanical, Electrical & Suspension Points",
       "Service Duration": "45 Minutes",
+      "Payment Terms": "Pay 45 KWD Cash at Bay",
       "Warranty": "6 Months / 10,000 KM Guarantee"
     }
   },
@@ -165,15 +171,15 @@ export const GARAGE_SERVICES: GarageService[] = [
     price: 650,
     description: "Precision engine rebuilding, forged internals installation, cylinder head machining, and valve timing calibration by certified masters.",
     descriptionAr: "تجديد وتوضيب المحركات بأحدث الأجهزة مع قطع مقواة وضبط التايمنج وفحص الضغط.",
-    longDescription: "🔧 Full blueprinting and high-performance rebuild. ⚙️ Forged connecting rods, pistons, and ARP stud installation. 🏆 Dyno break-in procedure and comprehensive warranty.",
+    longDescription: "🔧 Full blueprinting and high-performance rebuild. ⚙️ Forged connecting rods, pistons, and ARP stud installation. 🏆 Dyno break-in procedure and comprehensive warranty. Transparent cash billing.",
     icon: "wrench",
     warranty: "1 Year Comprehensive",
     image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Engine Block Assembly
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Forged Pistons & Rods
-      "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1000&q=80", // Cylinder Head Machining
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Precision Torque Calibration
+      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // Block Assembly
+      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Forged Rods
+      "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1000&q=80", // Head Machining
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80", // Torque Specs
       "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80"  // Dyno Break-in
     ],
     features: [
@@ -199,6 +205,7 @@ export const GARAGE_SERVICES: GarageService[] = [
       "Tolerances": "Precision Measured to within ±0.0001 inch",
       "Hardware Used": "ARP 2000 Fasteners, King Racing Bearings, Cometic Gaskets",
       "Testing": "Full Hot Oil Pressure & Compression Certification",
+      "Payment Terms": "Cash on Milestone Delivery",
       "Warranty": "1 Year Unlimited Mileage Comprehensive Garage Warranty"
     }
   },
@@ -210,7 +217,7 @@ export const GARAGE_SERVICES: GarageService[] = [
     price: 180,
     description: "Installation of Brembo/AP Racing multi-piston calipers, drilled rotors, stainless steel braided lines, and racing fluid flush.",
     descriptionAr: "تركيب دسكات مهواة وسفايف سيراميك وكليبرات رياضية مع تبديل زيت الفرامل DOT 5.1.",
-    longDescription: "🛑 Unmatched stopping power for track and highway. 🏎️ Drilled and slotted rotors to prevent heat fade under emergency stops. 🛡️ High-friction ceramic pads with zero noise and minimal dust.",
+    longDescription: "🛑 Unmatched stopping power for track and highway. 🏎️ Drilled and slotted rotors to prevent heat fade under emergency stops. 🛡️ High-friction ceramic pads with zero noise and minimal dust. Pay in cash at the bay.",
     icon: "gauge",
     warranty: "1 Year / 25,000 KM",
     image: "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80",
@@ -244,6 +251,7 @@ export const GARAGE_SERVICES: GarageService[] = [
       "Fluid Grade": "Motul RBF 600 Synthetic Brake Fluid (312°C Dry Boiling Point)",
       "Pad Material": "High-Friction Carbon-Ceramic Matrix (Noise-Free)",
       "Rotor Finish": "Zinc-Plated Anti-Corrosion Curved Vanes",
+      "Payment Terms": "Pay 180 KWD Cash at Bay",
       "Warranty": "1 Year / 25,000 KM Warranty"
     }
   }
@@ -256,6 +264,16 @@ interface ServicesSectionProps {
   onOpenBookingModal: (service?: GarageService) => void;
   onCloseBookingModal: () => void;
   onSelectDetail: (item: DetailItem) => void;
+  onBookingCreated?: (booking: {
+    serviceId: string;
+    serviceTitle: string;
+    vehicleModel: string;
+    date: string;
+    timeSlot: string;
+    totalAmount: number;
+    laborFee: number;
+    partsFee: number;
+  }) => void;
 }
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({
@@ -264,7 +282,8 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
   isBookingModalOpen,
   onOpenBookingModal,
   onCloseBookingModal,
-  onSelectDetail
+  onSelectDetail,
+  onBookingCreated
 }) => {
   const [selectedService, setSelectedService] = useState<GarageService>(GARAGE_SERVICES[0]);
   const [vehicleModel, setVehicleModel] = useState('');
@@ -273,19 +292,43 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookedJobId, setBookedJobId] = useState('');
 
   const isAr = language === 'ar';
 
   const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const jobId = `JOB-${Math.floor(1000 + Math.random() * 9000)}`;
+    setBookedJobId(jobId);
     setBookingSuccess(true);
+
+    if (onBookingCreated) {
+      onBookingCreated({
+        serviceId: selectedService.id,
+        serviceTitle: selectedService.title,
+        vehicleModel: vehicleModel || '2021 Nissan Patrol',
+        date: bookingDate,
+        timeSlot: timeSlot,
+        totalAmount: selectedService.price || 0,
+        laborFee: Math.round((selectedService.price || 0) * 0.8),
+        partsFee: Math.round((selectedService.price || 0) * 0.2)
+      });
+    }
+
     setTimeout(() => {
       setBookingSuccess(false);
       onCloseBookingModal();
       setVehicleModel('');
       setCustomerName('');
       setCustomerPhone('');
-    }, 2500);
+    }, 4000);
+  };
+
+  const getWhatsAppBookingLink = () => {
+    const text = encodeURIComponent(
+      `Hi ApexTorque, I just booked Service Ticket #${bookedJobId || 'JOB-4012'} for ${selectedService.title} on ${bookingDate} (${timeSlot}). Car: ${vehicleModel || 'Customer Car'}. Total due: ${selectedService.priceDisplay || `${selectedService.price} KWD`} in cash at bay.`
+    );
+    return `https://wa.me/96522002739?text=${text}`;
   };
 
   return (
@@ -338,8 +381,8 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
                 {isAr 
-                  ? 'سعر الفحص المبدئي والاستشارة: ??? د.ك (تسعير متغير حسب المشكلة). يقوم كبار المهندسين بفحص كمبيوتر السيارة وتحديد التكلفة بدقة تامة.'
-                  : 'Diagnostic Price: ??? KWD (Variable Inquiry Quote). Master technicians perform deep ECU and physical diagnostics before providing a guaranteed quote.'}
+                  ? 'سعر الفحص المبدئي والاستشارة: ??? د.ك (تسعير متغير حسب المشكلة). يقوم كبار المهندسين بفحص كمبيوتر السيارة وتحديد التكلفة بدقة تامة. الدفع نقداً في الورشة.'
+                  : 'Diagnostic Price: ??? KWD (Variable Inquiry Quote). Master technicians perform deep ECU and physical diagnostics before providing a guaranteed quote. Pay in cash at the bay.'}
               </p>
             </div>
           </div>
@@ -380,6 +423,9 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                   <img 
                     src={service.image} 
                     alt={service.title} 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   />
                   {service.popular && (
@@ -422,7 +468,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
               {/* Bottom Actions */}
               <div className="p-5 pt-0 border-t border-slate-200/60 flex items-center justify-between mt-auto">
                 <div>
-                  <div className="text-[10px] text-slate-400 font-bold uppercase">{isAr ? 'التسعير' : 'PRICE'}</div>
+                  <div className="text-[10px] text-slate-400 font-bold uppercase">{isAr ? 'التسعير نقداً' : 'CASH AT BAY'}</div>
                   <div className="text-xl font-black text-slate-900">
                     {service.priceDisplay ? (
                       <span className="text-sky-600">{service.priceDisplay}</span>
@@ -473,21 +519,39 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
               </button>
 
               {bookingSuccess ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mx-auto mb-4 animate-bounce">
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mx-auto mb-3 animate-bounce">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
-                  <h3 className="text-2xl font-extrabold text-slate-900 mb-2">
+                  <h3 className="text-2xl font-extrabold text-slate-900 mb-1">
                     {isAr ? 'تم تأكيد حجز الموعد بنجاح!' : 'Service Bay Confirmed!'}
                   </h3>
-                  <p className="text-sm text-slate-600 max-w-sm mx-auto mb-4">
+                  <p className="text-xs text-slate-600 max-w-sm mx-auto mb-3">
                     {isAr 
-                      ? `تم تأكيد موعدك لـ ${selectedService.titleAr || selectedService.title} بتاريخ ${bookingDate} الساعة ${timeSlot}. سنرسل لك تذكرة الدخول عبر واتساب.`
-                      : `Your booking for ${selectedService.title} on ${bookingDate} at ${timeSlot} is locked in. Entry pass sent via WhatsApp.`}
+                      ? `تم تأكيد موعدك لـ ${selectedService.titleAr || selectedService.title} بتاريخ ${bookingDate} الساعة ${timeSlot}. الدفع نقداً عند الوصول في الورشة.`
+                      : `Your booking for ${selectedService.title} on ${bookingDate} at ${timeSlot} is locked in. Payment is due in cash on arrival at Bay #3.`}
                   </p>
-                  <div className="text-xs font-mono text-sky-600 font-bold">
-                    Apex Shuwaikh // Bay #3 Ready
+                  
+                  <div className="text-xs font-mono text-sky-600 font-bold mb-5">
+                    JOB TICKET: #{bookedJobId}
                   </div>
+
+                  <a
+                    href={getWhatsAppBookingLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mb-3"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Confirm Ticket #{bookedJobId} via WhatsApp</span>
+                  </a>
+
+                  <button
+                    onClick={onCloseBookingModal}
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                  >
+                    Close Window
+                  </button>
                 </div>
               ) : (
                 <>
@@ -603,7 +667,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
 
                     <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
                       <div>
-                        <span className="text-xs text-slate-500">{isAr ? 'الإجمالي التقديري: ' : 'Total: '}</span>
+                        <span className="text-xs text-slate-500">{isAr ? 'الدفع نقداً عند الوصول: ' : 'Pay Cash on Arrival: '}</span>
                         <span className="text-xl font-extrabold text-sky-600">
                           {selectedService.priceDisplay || `${selectedService.price} KWD`}
                         </span>
@@ -613,7 +677,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                         type="submit"
                         className="px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95"
                       >
-                        {isAr ? 'تأكيد الحجز' : 'Confirm Bay'}
+                        {isAr ? 'تأكيد الحجز (نقداً)' : 'Confirm Bay (Cash)'}
                       </button>
                     </div>
                   </form>

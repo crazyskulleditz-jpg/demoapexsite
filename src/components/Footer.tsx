@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Wrench, PhoneCall, MapPin, ExternalLink, ShieldCheck, Heart } from 'lucide-react';
+import React from 'react';
+import { Wrench, PhoneCall, MapPin, ExternalLink, ShieldCheck } from 'lucide-react';
 import { Language } from '../types';
 
 interface FooterProps {
@@ -10,7 +10,10 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
   const isAr = language === 'ar';
 
   return (
-    <footer className="bg-slate-900 text-white pt-16 pb-12 font-sans border-t border-slate-800">
+    <footer 
+      className="text-white pt-16 pb-12 font-sans border-t border-slate-800 transition-colors duration-200"
+      style={{ backgroundColor: 'var(--footer-bg, #0b0f19)' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         
         {/* Main Grid */}
@@ -19,11 +22,14 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
           {/* Brand & Location */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center text-white font-bold">
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-md"
+                style={{ backgroundColor: 'var(--primary-accent, #0284c7)' }}
+              >
                 <Wrench className="w-5 h-5" />
               </div>
               <span className="text-2xl font-extrabold tracking-tight">
-                APEX<span className="text-sky-400">TORQUE</span>
+                APEX<span style={{ color: 'var(--primary-accent, #0284c7)' }}>TORQUE</span>
               </span>
             </div>
             
@@ -38,17 +44,17 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
                 href="https://maps.google.com/?q=Shuwaikh+Industrial+Area+Kuwait" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:text-sky-400 transition-colors"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               >
-                <MapPin className="w-4 h-4 text-sky-400 shrink-0" />
+                <MapPin className="w-4 h-4 shrink-0" style={{ color: 'var(--secondary-accent, #f59e0b)' }} />
                 <span>{isAr ? '📍 الشويخ الصناعية 1 - شارع 12 - الكويت' : '📍 Street 12, Shuwaikh Industrial 1, Kuwait'}</span>
               </a>
 
               <a 
                 href="tel:+96522002739" 
-                className="flex items-center gap-2 hover:text-sky-400 transition-colors font-bold"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity font-bold"
               >
-                <PhoneCall className="w-4 h-4 text-sky-400 shrink-0" />
+                <PhoneCall className="w-4 h-4 shrink-0" style={{ color: 'var(--primary-accent, #0284c7)' }} />
                 <span>+965 2200-APEX (2739) / +965 9900-TORQ</span>
               </a>
             </div>
@@ -59,7 +65,8 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
                 href="https://instagram.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1"
+                className="text-xs font-bold hover:underline flex items-center gap-1"
+                style={{ color: 'var(--primary-accent, #0284c7)' }}
               >
                 <span>Instagram: @apextorque.kw</span>
                 <ExternalLink className="w-3 h-3" />
@@ -68,7 +75,8 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
                 href="https://tiktok.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1"
+                className="text-xs font-bold hover:underline flex items-center gap-1"
+                style={{ color: 'var(--primary-accent, #0284c7)' }}
               >
                 <span>TikTok: @apextorque</span>
                 <ExternalLink className="w-3 h-3" />
@@ -78,7 +86,10 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
 
           {/* Quick Links 1 */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-sky-400 mb-4">
+            <h4 
+              className="text-xs font-bold uppercase tracking-wider mb-4"
+              style={{ color: 'var(--primary-accent, #0284c7)' }}
+            >
               {isAr ? 'الصيانة والإصلاح' : 'Diagnosing & Repair'}
             </h4>
             <ul className="space-y-2.5 text-xs text-slate-400">
@@ -91,7 +102,10 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
 
           {/* Quick Links 2 */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-sky-400 mb-4">
+            <h4 
+              className="text-xs font-bold uppercase tracking-wider mb-4"
+              style={{ color: 'var(--primary-accent, #0284c7)' }}
+            >
               {isAr ? 'القطع والمعرض' : 'Performance & Showroom'}
             </h4>
             <ul className="space-y-2.5 text-xs text-slate-400">
@@ -104,7 +118,10 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
 
           {/* Workshop Credentials */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-sky-400 mb-4">
+            <h4 
+              className="text-xs font-bold uppercase tracking-wider mb-4"
+              style={{ color: 'var(--primary-accent, #0284c7)' }}
+            >
               {isAr ? 'اعتمادات الورشة' : 'Workshop Standards'}
             </h4>
             <div className="space-y-2 text-xs text-slate-400">
@@ -125,10 +142,10 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
             © {new Date().getFullYear()} APEX TORQUE GARAGE W.L.L. ALL RIGHTS RESERVED.
           </div>
           <div className="flex gap-6">
-            <a href="https://maps.google.com/?q=Shuwaikh+Industrial+Area+Kuwait" target="_blank" rel="noopener noreferrer" className="hover:text-sky-400">
+            <a href="https://maps.google.com/?q=Shuwaikh+Industrial+Area+Kuwait" target="_blank" rel="noopener noreferrer" className="hover:text-white">
               {isAr ? 'موقع الورشة' : 'Workshop Map'}
             </a>
-            <a href="#" className="hover:text-sky-400">
+            <a href="#" className="hover:text-white">
               {isAr ? 'الشروط والضمان' : 'Terms & Warranty'}
             </a>
           </div>

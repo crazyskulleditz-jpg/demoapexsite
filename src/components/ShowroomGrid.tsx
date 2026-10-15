@@ -13,6 +13,7 @@ import {
   FileText
 } from 'lucide-react';
 import { Vehicle, Language, DetailItem } from '../types';
+import { FALLBACK_IMAGE } from './ImageGallery';
 
 export const SHOWROOM_VEHICLES: Vehicle[] = [
   {
@@ -44,10 +45,10 @@ export const SHOWROOM_VEHICLES: Vehicle[] = [
     gallery: [
       "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80", // Front 3/4 View
       "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1000&q=80", // Rear Profile & Nismo Exhaust
-      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80", // Cockpit & Alcantara Wheel
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // 5.6L V8 Engine Bay Clean
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // 22-inch RAYS Forged Alloys
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80"  // Dyno Inspection & Undercarriage
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80", // Cockpit & Alcantara Wheel
+      "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1000&q=80", // 5.6L V8 Engine Bay Clean
+      "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1000&q=80", // 22-inch RAYS Forged Alloys
+      "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1000&q=80"  // Dyno Inspection & Undercarriage
     ],
     badge: "NISMO FACTORY SPEC",
     featured: true,
@@ -160,10 +161,10 @@ export const SHOWROOM_VEHICLES: Vehicle[] = [
     image: "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=1000&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=1000&q=80", // GT500 Front Hero
-      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80", // Supercharged V8 Predator Engine
-      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80", // Recaro Bucket Cockpit
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80", // Red Brembo 6-Piston Brakes
-      "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80"  // Carbon Track Wing & Rear Quad Tips
+      "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1000&q=80", // Supercharged V8 Predator Engine
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80", // Recaro Bucket Cockpit
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80", // Red Brembo 6-Piston Brakes
+      "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1000&q=80"  // Carbon Track Wing & Rear Quad Tips
     ],
     badge: "BORLA ACTIVE EXHAUST",
     location: "Shuwaikh VIP Showroom",
@@ -213,9 +214,9 @@ export const SHOWROOM_VEHICLES: Vehicle[] = [
     gallery: [
       "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1000&q=80", // GR Sport Front View
       "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1000&q=80", // Side Profile & Black Wheels
-      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80", // Two-Tone Leather Cockpit
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // 3.5L Twin Turbo V6 Bay
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80"  // E-KDSS Suspension Underbody
+      "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1000&q=80", // Two-Tone Leather Cockpit
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80", // 3.5L Twin Turbo V6 Bay
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80"  // E-KDSS Suspension Underbody
     ],
     badge: "OFF-ROAD PRO GR",
     location: "Shuwaikh VIP Showroom",
@@ -264,10 +265,10 @@ export const SHOWROOM_VEHICLES: Vehicle[] = [
     image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1000&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1000&q=80", // Green M4 Front
-      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80", // Carbon Roof & Mirrors
-      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80", // Orange Merino Interior Cockpit
-      "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80", // S58 Twin Turbo Engine Bay
-      "https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?auto=format&fit=crop&w=1000&q=80"  // M Compound Brakes & Wheels
+      "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1000&q=80", // Carbon Roof & Mirrors
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80", // Orange Merino Interior Cockpit
+      "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1000&q=80", // S58 Twin Turbo Engine Bay
+      "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1000&q=80"  // M Compound Brakes & Wheels
     ],
     badge: "M XDRIVE 4WD",
     location: "Al-Rai Showroom",
@@ -375,6 +376,9 @@ export const ShowroomGrid: React.FC<ShowroomGridProps> = ({
                     <img 
                       src={car.image} 
                       alt={car.name} 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+                      }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                     />
                     <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold text-sky-700">
@@ -425,7 +429,7 @@ export const ShowroomGrid: React.FC<ShowroomGridProps> = ({
                 {/* Footer */}
                 <div className="p-6 pt-0 border-t border-slate-200/60 flex items-center justify-between mt-auto">
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-slate-400">{isAr ? 'السعر كاش / أقساط' : 'CASH / FINANCING'}</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-400">{isAr ? 'السعر كاش' : 'CASH PRICE'}</div>
                     <div className="text-2xl font-black text-slate-900">
                       {car.price.toLocaleString()} <span className="text-xs text-slate-500 font-normal">KWD</span>
                     </div>
@@ -477,6 +481,9 @@ export const ShowroomGrid: React.FC<ShowroomGridProps> = ({
                 <img 
                   src={activeCarModal.image} 
                   alt={activeCarModal.name} 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
+                  }}
                   className="w-full h-full object-cover" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
