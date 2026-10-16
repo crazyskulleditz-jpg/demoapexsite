@@ -75,6 +75,8 @@ interface AdminDashboardProps {
   onDeleteTestDrive?: (id: string) => void;
 }
 
+import { saveMediaFile } from '../utils/mediaStore';
+
 const SESSION_STORAGE_KEY = 'apex_admin_auth';
 
 export const STORE_CATEGORIES: { id: StoreCategory; labelEn: string; labelAr: string; type: 'product' | 'service' | 'vehicle' }[] = [
@@ -1898,7 +1900,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <form onSubmit={handleSaveThemeSettings} className="space-y-8">
               
-              {/* === THEME: text colours / hero background / sticker header === */}
+              {/* === THEME: neon hover glow on listing cards === */}
+<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-3 mt-4">
+  <h3 className="text-xs font-bold uppercase text-white">Listing Hover Glow (Neon)</h3>
+  <div className="flex items-center gap-2">
+    <input type="color" value={String((config as any).neonColor || "#22d3ee")} onChange={(e) => updateSiteSettings({ neonColor: e.target.value } as any)} className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0" />
+    <input type="text" value={String((config as any).neonColor || "#22d3ee")} onChange={(e) => updateSiteSettings({ neonColor: e.target.value } as any)} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white" />
+  </div>
+  <p className="text-[10px] text-slate-500">On/off follows the existing "Enable Subtle Neon Accent Glow" checkbox below.</p>
+</div>
+{/* === THEME: text colours / hero background / sticker header === */}
 <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-4 mt-4">
   <h3 className="text-xs font-bold uppercase text-white">Text Colours</h3>
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1922,6 +1933,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     ))}
   </div>
   <div>
+        <div className="mb-3">
+      <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">Upload from your device (image or video)</label>
+      <input type="file" accept="image/*,video/*"
+        onChange={async (e) => {
+          const f = e.target.files && e.target.files[0];
+          if (!f) return;
+          const saved = await saveMediaFile(f);
+          if (saved.url) updateSiteSettings({ bgMediaUrl: saved.url, bgType: saved.type } as any);
+        }}
+        className="block w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-600 file:text-white cursor-pointer" />
+      <p className="text-[10px] text-slate-500 mt-1">Stored in IndexedDB in this browser. Videos supported - they never touch localStorage.</p>
+    </div>
     <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">Media URL (.jpg .png or .mp4)</label>
     <input type="text" value={String((config as any).bgMediaUrl || "")} onChange={(e) => updateSiteSettings({ bgMediaUrl: e.target.value } as any)} placeholder="https://..." className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white" />
   </div>

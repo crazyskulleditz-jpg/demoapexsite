@@ -128,6 +128,9 @@ export const SiteProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const cfgAny = config as any;
     if (cfgAny.bodyText) root.style.setProperty('--text-primary', cfgAny.bodyText);
     root.style.setProperty('--header-text', cfgAny.headerText || '#ffffff');
+    root.style.setProperty('--neon-color', cfgAny.enableNeonGlow === false
+      ? 'transparent'
+      : (cfgAny.neonColor || 'var(--secondary-accent, #f59e0b)'));
     if (cfgAny.listingText) root.style.setProperty('--listing-text', cfgAny.listingText);
 
     // ---- FONT FAMILY: this was stored by the admin panel but never applied ----

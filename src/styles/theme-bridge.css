@@ -127,3 +127,19 @@ header .text-white, header .text-slate-200, header .text-slate-300, header .text
 [class*="via-cyan-50"][class*="to-amber"] p {
   color: #0f172a !important;
 }
+
+/* 14. NEON HOVER GLOW - colour comes from the admin picker. */
+.theme-card { transition: box-shadow 180ms ease, border-color 180ms ease; }
+.theme-card:hover {
+  border-color: var(--neon-color, #22d3ee) !important;
+  box-shadow: 0 0 0 1px var(--neon-color, #22d3ee), 0 0 26px -6px var(--neon-color, #22d3ee) !important;
+}
+
+/* 15. FONT HARD-OVERRIDE.
+   If any wrapper (e.g. #root class="font-sans") declares its own font-family,
+   inheritance stops there and the admin font picker LOOKS broken even though
+   --app-font is set correctly. This forces the chosen font everywhere except
+   deliberate monospace. */
+html, body, #root, #root *:not(.font-mono):not(code):not(pre):not(kbd):not(samp) {
+  font-family: var(--app-font) !important;
+}

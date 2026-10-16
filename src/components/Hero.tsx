@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Language, PageView } from '../types';
 import { useSiteContext } from '../context/SiteContext';
+import { resolveMediaUrl } from '../utils/mediaStore';
 
 interface HeroProps {
   language: Language;
@@ -28,6 +29,24 @@ export const Hero: React.FC<HeroProps> = ({
 }) => {
   const { config } = useSiteContext();
   const cfg = config as any;
+
+  // Resolve uploaded media and decide image vs video from the real source,
+  // so a video saved while the panel said 'image' still renders as video.
+  const [bgSrc, setBgSrc] = useState('');
+  const [bgKind, setBgKind] = useState<'image' | 'video' | 'none'>('none');
+  useEffect(() => {
+    const raw = String(cfg.bgMediaUrl || '');
+    const declared = String(cfg.bgType || 'none');
+    if (!raw || declared === 'none') { setBgSrc(''); setBgKind('none'); return; }
+    let cancelled = false;
+    const isVideo = raw.indexOf('data:video') === 0 || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(raw);
+    resolveMediaUrl(raw).then((resolved) => {
+      if (cancelled) return;
+      setBgSrc(resolved);
+      setBgKind(isVideo || declared === 'video' ? 'video' : 'image');
+    });
+    return () => { cancelled = true; };
+  }, [cfg.bgMediaUrl, cfg.bgType]);
   const isAr = language === 'ar';
 
   const categoryCards = [
@@ -71,16 +90,17 @@ export const Hero: React.FC<HeroProps> = ({
 
   return (
     <section className="relative pt-36 pb-20 overflow-hidden bg-gradient-to-b from-sky-50/80 via-white to-slate-50 border-b border-sky-100">
-      {/* Admin-configurable background media (Website Builder) */}
-{cfg.bgMediaUrl && cfg.bgType === 'image' ? (
-  <img src={cfg.bgMediaUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            {/* Hero background: uploaded file (idb:) or plain URL, image or video */}
+{bgSrc && bgKind === 'image' ? (
+  <img src={bgSrc} alt="" className="absolute inset-0 w-full h-full object-cover" />
 ) : null}
-{cfg.bgMediaUrl && cfg.bgType === 'video' ? (
-  <video src={cfg.bgMediaUrl} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+{bgSrc && bgKind === 'video' ? (
+  <video src={bgSrc} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
 ) : null}
-{cfg.bgMediaUrl && cfg.bgType && cfg.bgType !== 'none' ? (
+{bgSrc ? (
   <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,' + (Number(cfg.bgOverlayOpacity) || 0) + ')' }} />
 ) : null}
+      {/* Decorative Radial Accents */}
 {/* Decorative Radial Accents */}
       <div className="absolute top-10 right-10 w-96 h-96 bg-sky-200/40 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-10 w-80 h-80 bg-cyan-100/40 rounded-full blur-2xl pointer-events-none" />
