@@ -112,20 +112,66 @@ export const SiteProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     root.style.setProperty('--card-border-color', cardBorderColor);
     root.style.setProperty('--card-border-width', cardBorderWidth);
 
+    // ---- derive readable text colours from the page background ----
+    const toRgb = (hex: string): number[] | null => {
+      const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(String(hex).trim());
+      return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+    };
+    const pageRgb = toRgb(page);
+    const lightBg = pageRgb ? (0.299 * pageRgb[0] + 0.587 * pageRgb[1] + 0.114 * pageRgb[2]) > 150 : false;
+    root.style.setProperty('--text-primary', lightBg ? '#0f172a' : '#f8fafc');
+    root.style.setProperty('--text-secondary', lightBg ? '#334155' : '#cbd5e1');
+    root.style.setProperty('--text-muted', lightBg ? '#64748b' : '#94a3b8');
+    root.style.setProperty('--surface-2', lightBg ? '#eef2f7' : '#1a2436');
+
+    // ---- explicit overrides from the admin Theme panel ----
+    const cfgAny = config as any;
+    if (cfgAny.bodyText) root.style.setProperty('--text-primary', cfgAny.bodyText);
+    root.style.setProperty('--header-text', cfgAny.headerText || '#ffffff');
+    if (cfgAny.listingText) root.style.setProperty('--listing-text', cfgAny.listingText);
+
+    // ---- FONT FAMILY: this was stored by the admin panel but never applied ----
+    const DEFAULT_STACK = "'Inter', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif";
+    const SPECIFIC_FONTS: [RegExp, string][] = [
+      [/orbitron|motorsport|hud/i, "'Orbitron', 'Rajdhani', 'Inter', sans-serif"],
+      [/jetbrain|mono|technical|ecu/i, "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace"],
+      [/montserrat|geometric/i, "'Montserrat', 'Inter', sans-serif"],
+      [/tajawal|cairo|arabic/i, "'Tajawal', 'Cairo', 'Inter', sans-serif"],
+      [/jakarta|crisp/i, "'Plus Jakarta Sans', 'Inter', sans-serif"],
+      [/sync|avant|luxury|garde/i, "'Sync', 'Avant Garde', 'Poppins', 'Inter', sans-serif"],
+    ];
+    const GENERIC_FONTS: [RegExp, string][] = [[/geist|inter|modern|sans|ui|system/i, DEFAULT_STACK]];
+    const fontCandidates = [config.customFontFamily, config.fontStyle]
+      .filter((v) => typeof v === 'string' && v.trim().length > 0) as string[];
+    let fontStack = '';
+    for (const cand of fontCandidates) {
+      if (/,|"/.test(cand)) { fontStack = cand; break; }
+      const hit = SPECIFIC_FONTS.find(([re]) => re.test(cand));
+      if (hit) { fontStack = hit[1]; break; }
+    }
+    if (!fontStack) {
+      for (const cand of fontCandidates) {
+        const hit = GENERIC_FONTS.find(([re]) => re.test(cand));
+        if (hit) { fontStack = hit[1]; break; }
+      }
+    }
+    if (!fontStack) fontStack = DEFAULT_STACK;
+    root.style.setProperty('--app-font', fontStack);
+    root.style.fontFamily = fontStack;
+
+    // Pull the file down now instead of waiting for the browser to decide.
+    const rawFirstFamily = String(fontStack).split(',')[0];
+    const firstFamily = rawFirstFamily.split(String.fromCharCode(39)).join('').split(String.fromCharCode(34)).join('').trim();
+    const fontApi = (document as any).fonts;
+    if (firstFamily && fontApi && typeof fontApi.load === 'function') {
+      ['400 1em', '700 1em', '800 1em'].forEach((spec) => {
+        fontApi.load(spec + ' "' + firstFamily + '"').catch(() => {});
+      });
+    }
+
     // Apply font scale to root
     root.style.fontSize = fontScale;
-  }, [
-    config.themeColor,
-    config.secondaryAccent,
-    config.headerBg,
-    config.footerBg,
-    config.cardBg,
-    config.pageBg,
-    config.fontSizeScale,
-    config.cardBorderRadius,
-    config.cardBorderColor,
-    config.cardBorderWidth
-  ]);
+  }, [config]);   // re-run on ANY setting change (incl. fontStyle / customFontFamily)
 
   // Sync state changes with localStorage
   useEffect(() => {

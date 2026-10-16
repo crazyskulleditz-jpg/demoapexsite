@@ -1,0 +1,129 @@
+/* ================================================================
+   theme-bridge.css  v2
+   Maps the storefronts hardcoded LIGHT Tailwind classes onto the
+   live theme from SiteContext. One file. Revert = delete the
+   import line in src/App.tsx.
+   v2 fixes: opacity variants (bg-white/95), gradient stops (hero),
+   and scoped text so nothing goes white-on-white.
+   ================================================================ */
+:root {
+  --app-font: 'Inter', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --surface-2: #1a2436;
+  --header-text: #ffffff;
+  --listing-text: #f8fafc;
+}
+html, body { font-family: var(--app-font) !important; }
+
+/* 1. light SECTION backgrounds + the hero gradient -> page background */
+.bg-slate-50, .bg-gray-50, .bg-neutral-50, .bg-zinc-50, .bg-stone-50,
+[class*="bg-slate-50/"],
+[class*="from-white"], [class*="from-slate-50"], [class*="from-slate-100"], [class*="from-gray-50"],
+[class*="via-white"], [class*="to-white"] {
+  background-color: var(--page-bg, #0f172a) !important;
+  background-image: none !important;
+}
+
+/* 2. white CARD surfaces (incl. bg-white/95 style variants) -> card background */
+.bg-white, .bg-slate-100, .bg-gray-100, .bg-neutral-100,
+[class*="bg-white/"], [class*="bg-slate-100/"], [class*="bg-gray-100/"] {
+  background-color: var(--card-bg, #1e293b) !important;
+}
+
+/* 3. deeper insets / pills -> surface-2 */
+.bg-slate-200, .bg-gray-200, .bg-slate-300, .bg-gray-300,
+[class*="bg-slate-200/"], [class*="bg-gray-200/"] {
+  background-color: var(--surface-2, #1a2436) !important;
+}
+
+/* 4. borders + dividers */
+[class*="border-slate-"], [class*="border-gray-"], [class*="border-stone-"],
+[class*="divide-slate-"], [class*="divide-gray-"] {
+  border-color: var(--card-border-color, #334155) !important;
+}
+
+/* 5. text colours */
+.text-slate-900, .text-slate-800, .text-gray-900, .text-gray-800,
+.text-stone-900, .text-black {
+  color: var(--text-primary, #f8fafc) !important;
+}
+.text-slate-700, .text-slate-600, .text-gray-700, .text-gray-600, .text-stone-700 {
+  color: var(--text-secondary, #cbd5e1) !important;
+}
+.text-slate-500, .text-slate-400, .text-gray-500, .text-gray-400 {
+  color: var(--text-muted, #94a3b8) !important;
+}
+
+/* 6. listing cards get their own control (admin picker drives this) */
+[class*="rounded"][class*="overflow-hidden"] .text-slate-900,
+[class*="rounded"][class*="overflow-hidden"] .text-slate-800 {
+  color: var(--listing-text, #f8fafc) !important;
+}
+
+/* 7. hardcoded blue -> real accent */
+.bg-sky-600, .bg-sky-500, .bg-blue-600, .bg-blue-500 {
+  background-color: var(--primary-accent, #0284c7) !important;
+}
+.text-sky-600, .text-sky-500, .text-blue-600, .text-blue-500 {
+  color: var(--primary-accent, #0284c7) !important;
+}
+[class*="border-sky-"], [class*="border-blue-"] {
+  border-color: var(--primary-accent, #0284c7) !important;
+}
+
+/* 8. SAFETY NET - coloured callouts (amber advice box, red/green badges)
+      keep their own colours. MUST stay LAST. */
+[class*="bg-amber-"] *, [class*="bg-yellow-"] *, [class*="bg-emerald-"] *,
+[class*="bg-green-"] *, [class*="bg-rose-"] *, [class*="bg-red-"] *,
+[class*="bg-orange-"] *, [class*="bg-lime-"] * {
+  color: inherit !important;
+}
+
+/* 9. Light callout panels (the amber advice box) keep a LIGHT surface and DARK
+      text. Without this, rule 5 turned the panel text white while the panel
+      background stayed light -> invisible text. */
+[class*="from-amber-"], [class*="from-yellow-"], [class*="from-orange-"],
+[class*="to-amber-"],   [class*="via-amber-"],  [class*="via-yellow-"] {
+  background-image: none !important;
+  background-color: #fffbeb !important;
+  color: #0f172a !important;
+}
+[class*="from-amber-"] *, [class*="from-yellow-"] *, [class*="from-orange-"] * {
+  color: #0f172a !important;
+}
+
+/* 10. Header text (admin: Header Text). No-op if the navbar is not a <header>. */
+header .text-white, header .text-slate-200, header .text-slate-300, header .text-slate-400 {
+  color: var(--header-text, #ffffff) !important;
+}
+
+/* 11. Listing cards: admin Card Background / Border / Corner Curvature */
+.theme-card {
+  background-color: var(--card-bg, #1e293b) !important;
+  border-color: var(--card-border-color, #334155) !important;
+  border-radius: var(--card-radius, 1.5rem) !important;
+}
+.theme-card .text-slate-900, .theme-card .text-slate-800, .theme-card h3 {
+  color: var(--listing-text, #f8fafc) !important;
+}
+
+/* 12. Sticker bar marquee */
+.sticker-bar { overflow: hidden; }
+.sticker-track { display: flex; white-space: nowrap; width: max-content;
+  animation-name: sticker-scroll; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes sticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.sticker-bar:hover .sticker-track { animation-play-state: paused; }
+
+/* 13. ServicesSection consultation callout (line 373).
+      Wrapper is from-sky-50 / via-cyan-50 / to-amber-50 - rule 9 caught the
+      PANEL but not its children, so text-slate-900 h3 went white on light. */
+[class*="via-cyan-50"][class*="to-amber"] {
+  background-image: none !important;
+  background-color: #eef7ff !important;
+}
+[class*="via-cyan-50"][class*="to-amber"] h3,
+[class*="via-cyan-50"][class*="to-amber"] p {
+  color: #0f172a !important;
+}

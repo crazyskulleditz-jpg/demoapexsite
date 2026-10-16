@@ -438,11 +438,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                   whileHover={{ y: -6 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onSelectDetail({ type: 'product', data: product })}
-                  className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-sky-100 hover:border-sky-300 transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+                  className="theme-card bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-sky-100 hover:border-sky-300 transition-all duration-300 flex flex-col justify-between group cursor-pointer"
                 >
                   <div>
                     {/* Image Banner */}
-                    <div className="h-52 relative overflow-hidden bg-slate-100">
+                    <div className="aspect-square relative overflow-hidden bg-slate-950">
                       <img 
                         src={product.image} 
                         alt={product.name} 
@@ -451,8 +451,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                         }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                       />
-                      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-mono font-bold text-slate-700">
-                        {product.partNumber}
+                      <div className="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-sm text-white px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide">
+                        {product.category || 'PARTS'}
                       </div>
 
                       <div className="absolute top-3 right-3 bg-sky-600 text-white px-2.5 py-1 rounded-md text-[10px] font-bold">
@@ -462,6 +462,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       {/* Photo Counter */}
                       <div className="absolute bottom-2.5 left-2.5 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
                         📸 {product.gallery.length} Photos
+                        </div>
+                        <div className="absolute bottom-2.5 right-2.5 bg-emerald-600 text-white px-2.5 py-1 rounded-md text-[10px] font-black">
+                          {product.price} KWD
                       </div>
                     </div>
 
@@ -473,7 +476,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                         ))}
                       </div>
 
-                      <h3 className="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition-colors mb-2">
+                      <div className="text-[10px] font-mono font-bold text-slate-500 mb-1">{product.partNumber}</div>
+                        <h3 className="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition-colors mb-2">
                         {isAr && product.nameAr ? product.nameAr : product.name}
                       </h3>
 

@@ -1898,7 +1898,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <form onSubmit={handleSaveThemeSettings} className="space-y-8">
               
-              {/* Text Size Scaler */}
+              {/* === THEME: text colours / hero background / sticker header === */}
+<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-4 mt-4">
+  <h3 className="text-xs font-bold uppercase text-white">Text Colours</h3>
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {[{k:"bodyText",l:"Body Text",d:"#f8fafc"},{k:"headerText",l:"Header Text",d:"#ffffff"},{k:"listingText",l:"Listing Text",d:"#f8fafc"}].map((f) => (
+      <div key={f.k}>
+        <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">{f.l}</label>
+        <div className="flex items-center gap-2">
+          <input type="color" value={String((config as any)[f.k] || f.d)} onChange={(e) => updateSiteSettings({ [f.k]: e.target.value } as any)} className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0" />
+          <input type="text" value={String((config as any)[f.k] || f.d)} onChange={(e) => updateSiteSettings({ [f.k]: e.target.value } as any)} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white" />
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-4 mt-4">
+  <h3 className="text-xs font-bold uppercase text-white">Hero Background (Image or Video)</h3>
+  <div className="flex flex-wrap gap-2">
+    {["none","image","video"].map((t) => (
+      <button key={t} type="button" onClick={() => updateSiteSettings({ bgType: t } as any)}
+        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase border transition-all ${((config as any).bgType || "none") === t ? "bg-sky-600 border-sky-500 text-white" : "bg-slate-950 border-slate-800 text-slate-300"}`}>{t}</button>
+    ))}
+  </div>
+  <div>
+    <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">Media URL (.jpg .png or .mp4)</label>
+    <input type="text" value={String((config as any).bgMediaUrl || "")} onChange={(e) => updateSiteSettings({ bgMediaUrl: e.target.value } as any)} placeholder="https://..." className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white" />
+  </div>
+  <div>
+    <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">Dark Overlay: {Math.round(Number((config as any).bgOverlayOpacity ?? 0.15) * 100)}%</label>
+    <input type="range" min="0" max="0.9" step="0.05" value={Number((config as any).bgOverlayOpacity ?? 0.15)} onChange={(e) => updateSiteSettings({ bgOverlayOpacity: Number(e.target.value) } as any)} className="w-full" />
+  </div>
+</div>
+<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-4 mt-4">
+  <h3 className="text-xs font-bold uppercase text-white">Sticker Header (scrolling bar)</h3>
+  <input type="text" value={String((config as any).stickerText || "")} onChange={(e) => updateSiteSettings({ stickerText: e.target.value } as any)} placeholder="Type anything here. Leave empty to hide the bar." className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div>
+      <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">Scroll speed (sec)</label>
+      <input type="number" min="5" max="120" value={Number((config as any).stickerSpeed || 30)} onChange={(e) => updateSiteSettings({ stickerSpeed: Number(e.target.value) } as any)} className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white" />
+    </div>
+    <div>
+      <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">Bar colour</label>
+      <input type="color" value={String((config as any).stickerBg || "#f59e0b")} onChange={(e) => updateSiteSettings({ stickerBg: e.target.value } as any)} className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0" />
+    </div>
+    <div>
+      <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">Sticker text colour</label>
+      <input type="color" value={String((config as any).stickerTextColor || "#0f172a")} onChange={(e) => updateSiteSettings({ stickerTextColor: e.target.value } as any)} className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0" />
+    </div>
+  </div>
+</div>
+{/* Text Size Scaler */}
               <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase text-white flex items-center gap-1.5">

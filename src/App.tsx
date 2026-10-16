@@ -17,6 +17,8 @@ import { AdminControls } from './components/AdminControls';
 import { SiteProvider, useSiteContext } from './context/SiteContext';
 import { SiteConfigProvider } from './context/SiteConfigContext';
 import { CatalogContext } from './context/CatalogContext';
+import './styles/theme-bridge.css';
+import { StickerBar } from './components/StickerBar';
 import { 
   Product, 
   CartItem, 
@@ -735,6 +737,8 @@ function MainApp() {
 
           {activePage === 'home' && (
             <>
+              <StickerBar />
+
               <Hero
                 language={language}
                 onOpenBooking={() => triggerBayBookingModal()}
