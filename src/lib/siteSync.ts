@@ -64,7 +64,9 @@ export async function pullSiteConfig(reload = true): Promise<void> {
   if (remoteJson === localJson) { if (remoteAt) setSyncedAt(remoteAt); return; }
 
   // Never clobber unsaved local edits.
-  const hasUnpushedLocal = lastPushedJson !== '' && localJson !== lastPushedJson;
+  const { data: sess } = await supabase.auth.getSession();
+  const signedIn = !!sess.session;
+  const hasUnpushedLocal = signedIn && lastPushedJson !== '' && localJson !== lastPushedJson;
   if (hasUnpushedLocal) { console.info('[siteSync] local edits pending - not overwriting.'); return; }
 
   const syncedAt = getSyncedAt();
