@@ -100,6 +100,9 @@ export interface OrderRecord {
   services?: unknown[];
   jobs?: unknown[];
   breakdown?: unknown[];
+  productName?: string;
+  quantity?: number;
+  price?: number;
 }
 
 export interface TestDriveRecord {
