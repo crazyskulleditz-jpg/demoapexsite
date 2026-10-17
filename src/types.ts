@@ -67,6 +67,39 @@ export interface OrderRecord {
   paymentMethod: string;
   date: string;
   trackingNumber: string;
+  dateAr?: string;
+  name?: string;
+  nameAr?: string;
+  title?: string;
+  titleAr?: string;
+  itemName?: string;
+  itemNameAr?: string;
+  item_name?: string;
+  productNameAr?: string;
+  product_name?: string;
+  partName?: string;
+  partNameAr?: string;
+  part_name?: string;
+  description?: string;
+  descriptionAr?: string;
+  desc?: string;
+  item?: string;
+  label?: string;
+  labelAr?: string;
+  summary?: string;
+  summaryAr?: string;
+  details?: string;
+  qty?: number;
+  count?: number;
+  total?: number;
+  subtotal?: number;
+  paymentMethodAr?: string;
+  statusAr?: string;
+  parts?: unknown[];
+  products?: unknown[];
+  services?: unknown[];
+  jobs?: unknown[];
+  breakdown?: unknown[];
 }
 
 export interface TestDriveRecord {
@@ -221,6 +254,7 @@ export interface GarageService {
     date: string;
     vehicle: string;
   }>;
+  specs?: string[];
 }
 
 export interface CartItem {
