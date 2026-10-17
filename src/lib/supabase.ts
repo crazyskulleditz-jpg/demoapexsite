@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = 'https://hsonauopmlehgejuknuy.supabase.co';
+const url = 'https://hsonauopmlehegjuknuy.supabase.co';
 const key = 'sb_publishable_QGtnNE6PS-1Fb7T5Ot5qtw_jzLhJG1m';
 
 if (!url || !key) {
