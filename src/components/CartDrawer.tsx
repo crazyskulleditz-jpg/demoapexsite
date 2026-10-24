@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { CartItem, Language, User, OrderRecord } from '../types';
+import { pushOrder } from '../lib/ordersApi';
 
 interface CartDrawerProps {
   language: Language;
@@ -245,6 +246,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     } catch {
       existingOrders = [];
     }
+
+    // Cloud copy - this is what makes the order reach the admin on any device.
+    void pushOrder(newOrder);
 
     const updatedOrders = [newOrder, ...existingOrders];
     try {

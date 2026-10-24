@@ -51,6 +51,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { fetchOrders, updateOrderCloud, deleteOrderCloud } from './lib/ordersApi';
 
 const FAMOUS_BRANDS = [
   { name: 'Toyota', emblem: '🏎️ TOYOTA', origin: 'Official GCC & Land Cruiser Tuning' },
@@ -201,6 +202,21 @@ function MainApp() {
     }
   }, [userTestDrives]);
 
+  // Pull orders placed on other devices. RLS returns rows only for an admin.
+  useEffect(() => {
+    let cancelled = false;
+    void fetchOrders().then((remote) => {
+      if (cancelled || remote.length === 0) return;
+      const incoming = remote as unknown as OrderRecord[];
+      setUserOrders((prev) => {
+        const seen = new Set(prev.map((o) => String(o.id)));
+        const extra = incoming.filter((o) => !seen.has(String(o.id)));
+        return extra.length ? [...extra, ...prev] : prev;
+      });
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
 
@@ -318,6 +334,7 @@ function MainApp() {
   };
 
   const handleUpdateOrder = (id: string, updated: Partial<OrderRecord>) => {
+    void updateOrderCloud(id, updated);
     const updatedList = userOrders.map(o => o.id === id ? { ...o, ...updated } : o);
     setUserOrders(updatedList);
     try {
@@ -329,6 +346,7 @@ function MainApp() {
   };
 
   const handleDeleteOrder = (id: string) => {
+    void deleteOrderCloud(id);
     const updatedList = userOrders.filter(o => o.id !== id);
     setUserOrders(updatedList);
     try {
