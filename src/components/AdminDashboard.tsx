@@ -843,7 +843,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {authError && (
               <div className="text-xs font-bold text-red-400 bg-red-950/40 border border-red-800/50 py-2.5 px-3 rounded-xl flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 shrink-0 text-red-400" />
-                <span>{isAr ? 'بيانات الدخول غير صحيحة.' : 'Invalid credentials. (Hint: admin / ApexTorque#2026!)'}</span>
+                <span>{isAr ? 'بيانات الدخول غير صحيحة.' : 'Invalid credentials. '}</span>
               </div>
             )}
 
