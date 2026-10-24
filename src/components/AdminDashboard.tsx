@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { useSiteContext } from '../context/SiteContext';
+import { supabase } from '../lib/supabase';
 import { 
+import { supabase } from '../lib/supabase';
   Product, 
   GarageService, 
   Vehicle, 
@@ -12,7 +15,9 @@ import {
   StoreCategory 
 } from '../types';
 import { FontStyleOption } from '../types/admin';
+import { supabase } from '../lib/supabase';
 import { 
+import { supabase } from '../lib/supabase';
   ShieldAlert, 
   Settings, 
   Layers, 
@@ -76,6 +81,7 @@ interface AdminDashboardProps {
 }
 
 import { saveMediaFile } from '../utils/mediaStore';
+import { supabase } from '../lib/supabase';
 
 const SESSION_STORAGE_KEY = 'apex_admin_auth';
 
@@ -395,25 +401,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+    const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanUsername = usernameInput.trim().toLowerCase();
     const cleanPassword = passwordInput.trim();
 
-    if (
-      (cleanUsername === 'admin' && cleanPassword === 'ApexTorque#2026!') ||
-      (cleanUsername === 'apex' && cleanPassword === 'ApexTorque#2026!') ||
-      (cleanUsername === 'manager' && cleanPassword === 'admin123')
-    ) {
-      setIsAdminAuthenticated(true);
-      setAuthError(false);
-      try {
-        sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
-      } catch (err) {
-        console.warn('Session write error:', err);
-      }
-    } else {
+    const isKnownAdmin =
+      ((cleanUsername === 'admin' || cleanUsername === 'apex') && cleanPassword === 'ApexTorque#2026!') ||
+      (cleanUsername === 'manager' && cleanPassword === 'admin123');
+
+    if (!isKnownAdmin) {
       setAuthError(true);
+      return;
+    }
+
+    // Create a REAL Supabase session. The write policy only allows
+    // authenticated users, so without this every push is refused.
+    const ADMIN_EMAIL = 'ramsinghsland@gmail.com';
+    const { error } = await supabase.auth.signInWithPassword({
+      email: ADMIN_EMAIL,
+      password: cleanPassword,
+    });
+    if (error) {
+      console.warn('[admin] Supabase sign-in failed:', error.message);
+    }
+
+    setIsAdminAuthenticated(true);
+    setAuthError(false);
+    try {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
+    } catch (err) {
+      console.warn('Session write error:', err);
     }
   };
 
