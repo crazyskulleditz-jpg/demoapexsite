@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { useSiteContext } from '../context/SiteContext';
-import { supabase } from '../lib/supabase';
 import { 
-import { supabase } from '../lib/supabase';
   Product, 
   GarageService, 
   Vehicle, 
@@ -15,9 +12,7 @@ import { supabase } from '../lib/supabase';
   StoreCategory 
 } from '../types';
 import { FontStyleOption } from '../types/admin';
-import { supabase } from '../lib/supabase';
 import { 
-import { supabase } from '../lib/supabase';
   ShieldAlert, 
   Settings, 
   Layers, 
@@ -415,7 +410,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       return;
     }
 
-    // Create a REAL Supabase session. The write policy only allows
+    // Create a REAL Supabase session - the write policy only allows
     // authenticated users, so without this every push is refused.
     const ADMIN_EMAIL = 'ramsinghsland@gmail.com';
     const { error } = await supabase.auth.signInWithPassword({
