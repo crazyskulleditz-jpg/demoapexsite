@@ -396,33 +396,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   };
 
-    const handleLoginSubmit = async (e: React.FormEvent) => {
+      const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError(false);
+
     const cleanUsername = usernameInput.trim().toLowerCase();
     const cleanPassword = passwordInput.trim();
 
-    const isKnownAdmin =
-      ((cleanUsername === 'admin' || cleanUsername === 'apex') && cleanPassword === 'ApexTorque#2026!') ||
-      (cleanUsername === 'manager' && cleanPassword === 'admin123');
-
-    if (!isKnownAdmin) {
+    // The username is only a UI label. The real credential is the Supabase
+    // password, which is never stored in this bundle.
+    if (cleanUsername !== 'admin' && cleanUsername !== 'apex' && cleanUsername !== 'manager') {
       setAuthError(true);
       return;
     }
 
-    // Create a REAL Supabase session - the write policy only allows
-    // authenticated users, so without this every push is refused.
     const ADMIN_EMAIL = 'ramsinghsland@gmail.com';
     const { error } = await supabase.auth.signInWithPassword({
       email: ADMIN_EMAIL,
       password: cleanPassword,
     });
+
     if (error) {
       console.warn('[admin] Supabase sign-in failed:', error.message);
+      setAuthError(true);
+      return;
     }
 
     setIsAdminAuthenticated(true);
-    setAuthError(false);
     try {
       sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
     } catch (err) {
