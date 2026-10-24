@@ -358,23 +358,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { label: 'Ultra Round (2rem)', value: '2rem' }
   ];
 
-  const handleMultiFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleMultiFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      Array.from(files).forEach(file => {
-        if (file.size > 25 * 1024 * 1024) {
-          alert(`File ${file.name} exceeds 25MB.`);
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (uploadEvent) => {
-          if (uploadEvent.target?.result) {
-            setFormImages(prev => [...prev, uploadEvent.target!.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+    if (!files || files.length === 0) return;
+    for (const file of Array.from(files)) {
+      if (file.size > 25 * 1024 * 1024) {
+        alert(`File ${file.name} exceeds 25MB.`);
+        continue;
+      }
+      // Upload to Supabase Storage instead of inlining as base64, which
+      // bloated the config past localStorage limits.
+      const saved = await saveMediaFile(file);
+      if (saved.url) {
+        setFormImages(prev => [...prev, saved.url]);
+      } else {
+        alert(`Could not upload ${file.name}. Make sure you are signed in first.`);
+      }
     }
+    e.target.value = '';
   };
 
   const handleAddImageUrl = () => {

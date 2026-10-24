@@ -52,6 +52,8 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { fetchOrders, updateOrderCloud, deleteOrderCloud } from './lib/ordersApi';
+import { fetchLeads, syncLeads } from './lib/leadsApi';
+import { supabase } from './lib/supabase';
 
 const FAMOUS_BRANDS = [
   { name: 'Toyota', emblem: '🏎️ TOYOTA', origin: 'Official GCC & Land Cruiser Tuning' },
@@ -215,6 +217,53 @@ function MainApp() {
       });
     });
     return () => { cancelled = true; };
+  }, []);
+
+  // ---- bookings + test drives: push to the cloud (debounced, like the site config) ----
+  useEffect(() => {
+    if (userBookings.length === 0) return;
+    const t = setTimeout(() => { void syncLeads('booking', userBookings); }, 800);
+    return () => clearTimeout(t);
+  }, [userBookings]);
+
+  useEffect(() => {
+    if (userTestDrives.length === 0) return;
+    const t = setTimeout(() => { void syncLeads('testdrive', userTestDrives); }, 800);
+    return () => clearTimeout(t);
+  }, [userTestDrives]);
+
+  // ---- pull cloud records, and again whenever an admin signs in (no hard-refresh needed) ----
+  useEffect(() => {
+    let cancelled = false;
+    const merge = <T,>(prev: T[], incoming: T[], idOf: (x: T) => string): T[] => {
+      const seen = new Set(prev.map(idOf));
+      const extra = incoming.filter((x) => !seen.has(idOf(x)));
+      return extra.length ? [...extra, ...prev] : prev;
+    };
+    const pull = () => {
+      void fetchOrders().then((r) => {
+        if (cancelled || r.length === 0) return;
+        const incoming = r as unknown as OrderRecord[];
+        setUserOrders((prev) => merge(prev, incoming, (o) => String(o.id)));
+      });
+      void fetchLeads('booking').then((r) => {
+        if (cancelled || r.length === 0) return;
+        const incoming = r as unknown as BookingRecord[];
+        setUserBookings((prev) => merge(prev, incoming, (b) => String(b.id)));
+      });
+      void fetchLeads('testdrive').then((r) => {
+        if (cancelled || r.length === 0) return;
+        const incoming = r as unknown as TestDriveRecord[];
+        setUserTestDrives((prev) => merge(prev, incoming, (d) => String(d.id)));
+      });
+    };
+    pull();
+    const sub: any = (supabase.auth as any).onAuthStateChange((_e: any, session: any) => { if (session) pull(); });
+    return () => {
+      cancelled = true;
+      const s = sub && sub.data && sub.data.subscription;
+      if (s && typeof s.unsubscribe === "function") s.unsubscribe();
+    };
   }, []);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
